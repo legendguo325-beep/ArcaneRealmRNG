@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Arcane Realm RNG",
+  "version": "1.0.0",
+  "description": "Premium logic multi-tier RNG simulator with advanced potion luck tables and persistence engine.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
