@@ -15,10 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const buffPurge = document.getElementById('buff-purge');
 
   let runtimeState = {
-    coins: 500,
-    gems: 15,
+    coins: 50,
+    gems: 0,
     balance: 0.00,
-    inventory: { basic: 2, rare: 1, mythic: 0, legendary: 0, divine: 0 },
+    inventory: { basic: 0, rare: 0, mythic: 0, legendary: 0, divine: 0 },
     activePotion: null
   };
 
@@ -227,3 +227,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   paintWheelMatrix();
 });
+
