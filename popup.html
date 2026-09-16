@@ -4,267 +4,261 @@
   <meta charset="UTF-8">
   <style>
     :root {
-      --bg-dark: #070512;
-      --panel-bg: rgba(22, 16, 43, 0.75);
-      --border-glow: rgba(138, 43, 226, 0.25);
+      --bg: #0b0914;
+      --panel: rgba(25, 20, 48, 0.8);
       --gold: #ffaa00;
       --gem: #bf40ff;
       --cash: #00ff88;
+      
+      /* Hex values matching your custom image profiles */
       --color-basic: #9ba1b0;
+      --color-uncommon: #2ecc71;
       --color-rare: #0088ff;
-      --color-mythic: #ff5500;
-      --color-legendary: #ff0055;
+      --color-mythic: #a832ff;
+      --color-legendary: #ffd700;
       --color-divine: #00ffff;
     }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      width: 360px;
+      width: 350px;
+      box-sizing: border-box;
       padding: 16px;
       margin: 0;
-      background: radial-gradient(circle at top, #140d30 0%, var(--bg-dark) 90%);
+      background: radial-gradient(circle at top, #1c153f 0%, var(--bg) 85%);
       color: #ffffff;
       overflow-x: hidden;
+      overflow-y: auto;
+    }
+    h3 {
+      margin: 0 0 14px 0;
+      text-align: center;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px var(--color-divine);
     }
     .dashboard {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
+      gap: 6px;
+      margin-bottom: 14px;
     }
     .stat-card {
-      background: linear-gradient(135deg, #130f2b, #090617);
-      border: 1px solid var(--border-glow);
-      border-radius: 8px;
-      padding: 10px 4px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 6px;
+      padding: 8px 4px;
       text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
-    .stat-lbl { font-size: 9px; color: #7f7b9c; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-    .stat-val { font-size: 14px; font-weight: 800; font-family: monospace; }
+    .stat-lbl { font-size: 8px; color: #8c88af; text-transform: uppercase; margin-bottom: 2px; }
+    .stat-val { font-size: 13px; font-weight: 800; font-family: monospace; }
     #coins-val { color: var(--gold); }
     #gems-val { color: var(--gem); }
     #bal-val { color: var(--cash); }
-    .nav-rack {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 4px;
-      border-radius: 8px;
-      margin-bottom: 14px;
-    }
-    .nav-tab {
-      padding: 8px;
-      background: transparent;
-      border: none;
-      color: #7f7b9c;
-      font-size: 11px;
-      font-weight: bold;
-      text-transform: uppercase;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: all 0.2s ease-in-out;
-    }
-    .nav-tab.active { background: #201647; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-    .view-view { display: none; }
-    .view-view.active { display: block; }
-    .section-title { font-size: 10px; text-transform: uppercase; color: #6a6491; margin: 12px 0 8px 0; letter-spacing: 1.5px; font-weight: 700; }
-    .chest-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .chest-node {
-      background: var(--panel-bg);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 10px;
-      padding: 10px 4px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.15s ease, border 0.15s ease;
-    }
-    .chest-node:hover { transform: translateY(-2px); border-color: var(--gold); background: #191238; }
-    .chest-icon { font-size: 24px; margin-bottom: 4px; }
-    .chest-title { font-size: 10px; font-weight: bold; color: #e1ddf7; }
-    .chest-price { font-size: 9px; color: var(--gold); margin-top: 4px; font-weight: bold; }
-    .wheel-surface {
+
+    .wheel-container {
       position: relative;
-      width: 240px;
-      height: 240px;
-      margin: 16px auto;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 14px auto;
     }
     canvas#wheel {
-      border: 6px solid #1a133d;
+      display: block;
+      border: 4px solid #231b4d;
       border-radius: 50%;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.7), 0 0 20px rgba(191,64,255,0.15);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
     .wheel-ticker {
       position: absolute;
-      top: -8px;
+      top: -6px;
       left: 50%;
       transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-      border-top: 20px solid var(--color-legendary);
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 16px solid var(--color-mythic);
       z-index: 10;
-      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
     }
     button#spin-btn {
       width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--color-legendary) 0%, #aa0033 100%);
+      padding: 12px;
+      background: linear-gradient(135deg, var(--color-mythic) 0%, #6312b3 100%);
       color: #fff;
       border: none;
-      border-radius: 10px;
-      font-size: 13px;
+      border-radius: 8px;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       cursor: pointer;
-      box-shadow: 0 6px 16px rgba(255, 0, 85, 0.3);
-      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(168,50,255,0.25);
+      margin-bottom: 14px;
     }
-    button#spin-btn:disabled { background: #201b3a; color: #514b70; box-shadow: none; cursor: not-allowed; }
-    .buff-banner {
-      background: rgba(0, 255, 255, 0.04);
-      border: 1px dashed rgba(0, 255, 255, 0.2);
-      padding: 8px 12px;
+    button#spin-btn:disabled { background: #231d3d; color: #575275; box-shadow: none; cursor: not-allowed; }
+
+    .inventory-section {
+      background: var(--panel);
       border-radius: 8px;
-      margin-bottom: 12px;
-      font-size: 11px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.03);
     }
-    .buff-purge { color: var(--color-legendary); font-size: 9px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
-    .inventory-container {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      max-height: 290px;
-      overflow-y: auto;
-    }
+    .inv-title { font-size: 10px; text-transform: uppercase; color: #8c88af; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+    
     .item-row {
       display: flex;
       align-items: center;
-      background: var(--panel-bg);
-      border-radius: 8px;
-      padding: 10px 12px;
-      border: 1px solid rgba(255,255,255,0.03);
-      position: relative;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
     }
-    .item-row::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      border-radius: 8px 0 0 8px;
+    .item-row:last-child { border-bottom: none; }
+    
+    .item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .row-basic::before { background: var(--color-basic); }
-    .row-rare::before { background: var(--color-rare); }
-    .row-mythic::before { background: var(--color-mythic); }
-    .row-legendary::before { background: var(--color-legendary); }
-    .row-divine::before { background: var(--color-divine); }
-    .item-avatar { font-size: 20px; margin-right: 12px; }
-    .item-body { flex-grow: 1; }
-    .item-head-line { font-size: 12px; font-weight: bold; }
-    .item-desc-line { font-size: 10px; color: #7f7b9c; margin-top: 2px; }
-    .item-qty { font-size: 12px; font-weight: bold; font-family: monospace; color: #fff; margin-right: 12px; }
-    .trigger-action-btn {
-      padding: 6px 12px;
-      font-size: 10px;
-      background: #1d163d;
-      border: 1px solid #322661;
+    /* Vector Asset Frame Rendering Setup */
+    .potion-asset {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #15112e;
+      border: 1px solid currentColor;
+      font-size: 15px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    .item-name { font-size: 11px; font-weight: bold; }
+    .item-controls { display: flex; align-items: center; gap: 8px; }
+    .item-qty { font-size: 11px; font-family: monospace; font-weight: bold; color: #fff; width: 14px; text-align: center; }
+    
+    .btn-action {
+      padding: 4px 8px;
+      font-size: 9px;
+      background: #15112e;
+      border: 1px solid #332963;
       color: #fff;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       text-transform: uppercase;
       font-weight: bold;
     }
-    .trigger-action-btn:hover { background: #281e54; }
-    .item-row.active { background: rgba(0, 255, 255, 0.05); border-color: rgba(0, 255, 255, 0.3); }
-    .item-row.active .trigger-action-btn { background: var(--color-legendary); border-color: var(--color-legendary); }
-    #ticker-tray { margin-top: 14px; text-align: center; font-size: 11px; color: #7f7b9c; font-weight: 500; }
+    .btn-action:hover { background: #1f1945; }
+    .item-row.active .item-name { text-shadow: 0 0 5px currentColor; }
+    .item-row.active .btn-action { background: var(--color-mythic); border-color: var(--color-mythic); }
+
+    #ticker-tray {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 10px;
+      color: #8c88af;
+      font-weight: 500;
+      min-height: 14px;
+    }
   </style>
 </head>
 <body>
   <h3>Arcane Realm RNG</h3>
+  
   <div class="dashboard">
-    <div class="stat-card"><div class="stat-lbl">🪙 Coins</div><div class="stat-val" id="coins-val">50</div></div>
-    <div class="stat-card"><div class="stat-lbl">💎 Gems</div><div class="stat-val" id="gems-val">0</div></div>
-    <div class="stat-card"><div class="stat-lbl">💳 Balance</div><div class="stat-val" id="bal-val">$0.00</div></div>
+    <div class="stat-card"><div class="stat-lbl">Coins</div><div class="stat-val" id="coins-val">50</div></div>
+    <div class="stat-card"><div class="stat-lbl">Gems</div><div class="stat-val" id="gems-val">0</div></div>
+    <div class="stat-card"><div class="stat-lbl">Balance</div><div class="stat-val" id="bal-val">$0.00</div></div>
   </div>
-  <div class="nav-rack">
-    <button class="nav-tab active" id="tab-wheel">Fate Wheel</button>
-    <button class="nav-tab" id="tab-inv">Inventory</button>
+
+  <div class="wheel-container">
+    <div class="wheel-ticker"></div>
+    <canvas id="wheel" width="200" height="200"></canvas>
   </div>
-  <div id="view-wheel" class="view-view active">
-    <div class="buff-banner" id="buff-banner" style="display: none;">
-      <div>⚡ Armed: <span id="buff-title" style="font-weight:bold;">None</span></div>
-      <div class="buff-purge" id="buff-purge">Purge</div>
-    </div>
-    <div class="section-title">Acquire Mystery Vaults</div>
-    <div class="chest-grid">
-      <div class="chest-node" id="box-wooden">
-        <div class="chest-icon">📦</div>
-        <div class="chest-title">Wooden Cache</div>
-        <div class="chest-price">50 Coin</div>
+
+  <button id="spin-btn">Invoke Fate Roll</button>
+
+  <div class="inventory-section">
+    <div class="inv-title">Alchemical Potion Inventory</div>
+    
+    <!-- Tier 6: Divine -->
+    <div class="item-row" id="row-divine">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">✦</span>
+        <div class="item-name" style="color:var(--color-divine);">Divine Potion</div>
       </div>
-      <div class="chest-node" id="box-reinforced">
-        <div class="chest-icon">⛓️</div>
-        <div class="chest-title">Iron Vault</div>
-        <div class="chest-price">150 Coin</div>
-      </div>
-      <div class="chest-node" id="box-mythic">
-        <div class="chest-icon">👑</div>
-        <div class="chest-title">Ancient Urn</div>
-        <div class="chest-price">10 Gem</div>
-      </div>
-    </div>
-    <div class="wheel-surface">
-      <div class="wheel-ticker"></div>
-      <canvas id="wheel" width="240" height="240"></canvas>
-    </div>
-    <button id="spin-btn">Invoke Fate Roll</button>
-  </div>
-  <div id="view-inventory" class="view-view">
-    <div class="section-title">Owned Alchemy Potions</div>
-    <div class="inventory-container">
-      <div class="item-row row-divine" id="row-divine">
-        <div class="item-avatar">🌌</div>
-        <div class="item-body">
-          <div class="item-head-line" style="color:var(--color-divine);">Divine Potion</div>
-          <div class="item-desc-line">10x Jackpot shift, 5x Balance drops.</div>
-        </div>
+      <div class="item-controls">
         <div class="item-qty" id="qty-divine">0</div>
-        <button class="trigger-action-btn" id="btn-divine">Arm</button>
+        <button class="btn-action" id="btn-divine">Arm</button>
       </div>
-      <div class="item-row row-legendary" id="row-legendary">
-        <div class="item-avatar">🔥</div>
-        <div class="item-body">
-          <div class="item-head-line" style="color:var(--color-legendary);">Legendary Potion</div>
-          <div class="item-desc-line">5x Jackpot shift, 3x Balance drops.</div>
-        </div>
+    </div>
+
+    <!-- Tier 5: Legendary -->
+    <div class="item-row" id="row-legendary">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">★</span>
+        <div class="item-name" style="color:var(--color-legendary);">Legendary Potion</div>
+      </div>
+      <div class="item-controls">
         <div class="item-qty" id="qty-legendary">0</div>
-        <button class="trigger-action-btn" id="btn-legendary">Arm</button>
+        <button class="btn-action" id="btn-legendary">Arm</button>
       </div>
-      <div class="item-row row-mythic" id="row-mythic">
-        <div class="item-avatar">🔮</div>
-        <div class="item-body">
-          <div class="item-head-line" style="color:var(--color-mythic);">Mythic Potion</div>
-          <div class="item-desc-line">3x Jackpot shift, 2x Gem slots.</div>
-        </div>
+    </div>
+
+    <!-- Tier 4: Mythic -->
+    <div class="item-row" id="row-mythic">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">◆</span>
+        <div class="item-name" style="color:var(--color-mythic);">Mythic Potion</div>
+      </div>
+      <div class="item-controls">
         <div class="item-qty" id="qty-mythic">0</div>
-        <button class="trigger-action-btn" id="btn-mythic">Arm</button>
+        <button class="btn-action" id="btn-mythic">Arm</button>
       </div>
-      <div class="item-row row-rare" id="row-rare">
-        <div class="item-avatar">⚡</div>
-        <div class="item-body">
-          <div class="item-head-line" style="color:var(--color-rare);">Rare Potion</div>
+    </div>
+
+    <!-- Tier 3: Rare -->
+    <div class="item-row" id="row-rare">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">◈</span>
+        <div class="item-name" style="color:var(--color-rare);">Rare Potion</div>
+      </div>
+      <div class="item-controls">
+        <div class="item-qty" id="qty-rare">0</div>
+        <button class="btn-action" id="btn-rare">Arm</button>
+      </div>
+    </div>
+
+    <!-- Tier 2: Uncommon -->
+    <div class="item-row" id="row-uncommon">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">●</span>
+        <div class="item-name" style="color:var(--color-uncommon);">Uncommon Potion</div>
+      </div>
+      <div class="item-controls">
+        <div class="item-qty" id="qty-uncommon">0</div>
+        <button class="btn-action" id="btn-uncommon">Arm</button>
+      </div>
+    </div>
+
+    <!-- Tier 1: Basic -->
+    <div class="item-row" id="row-basic">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">•</span>
+        <div class="item-name" style="color:var(--color-basic);">Basic Potion</div>
+      </div>
+      <div class="item-controls">
+        <div class="item-qty" id="qty-basic">0</div>
+        <button class="btn-action" id="btn-basic">Arm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ticker-tray">Fate awaits your arrival.</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
+
 
 
