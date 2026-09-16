@@ -64,11 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
     { name: 'Material Chest', lootKey: 'materialChest', weight: 5, type: 'materialChest', c1: '#d8c2a4', c2: '#8b5e34' },
     { name: 'Gem Cluster', weight: 14, type: 'gems', val: 2, materials: { crystalShard: 1 }, c1: '#f1c7ff', c2: '#a342d4' },
     { name: 'Divine Royalty', weight: 1, type: 'jackpot', val: 0, materials: { goldOre: 2 }, c1: '#fff8c7', c2: '#e19a00' },
+    { name: 'Basic Potion', weight: 8, type: 'potion', tier: 'basic', c1: '#e2e4e8', c2: '#777b89' },
     { name: 'Uncommon Potion', weight: 7, type: 'potion', tier: 'uncommon', c1: '#d8ffd9', c2: '#2ecc71' },
     { name: 'Rare Potion', weight: 4, type: 'potion', tier: 'rare', c1: '#d7f2ff', c2: '#0088ff' },
     { name: 'Mythic Potion', weight: 2, type: 'potion', tier: 'mythic', c1: '#f0d9ff', c2: '#a832ff' },
     { name: 'Legendary Potion', weight: 1, type: 'potion', tier: 'legendary', c1: '#fff3b0', c2: '#e19a00' },
-    { name: 'Divine Potion', weight: 0.5, type: 'potion', tier: 'divine', c1: '#dfffff', c2: '#00a9c7' }
+    { name: 'Divine Potion', weight: 0.5, type: 'potion', tier: 'divine', c1: '#dfffff', c2: '#00a9c7' },
+    { name: 'Eternal Potion', weight: 0.1, type: 'potion', tier: 'eternal', c1: '#eaffff', c2: '#00b9d4' }
   ];
 
   let wheelPrizes = [];
@@ -79,10 +81,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const permanentPrizes = basePrizes.filter(prize => prize.type !== 'potion');
     const potionPrizes = basePrizes.filter(prize => prize.type === 'potion');
     let selectedPrizes = [...permanentPrizes];
-    if (Math.random() < 0.35) {
-      const omittedIndex = Math.floor(Math.random() * selectedPrizes.length);
-      selectedPrizes = selectedPrizes.filter((prize, index) => index !== omittedIndex);
-      selectedPrizes.push(potionPrizes[Math.floor(Math.random() * potionPrizes.length)]);
+    const potionSpawnChance = {
+      basic: 0.2,
+      uncommon: 0.14,
+      rare: 0.09,
+      mythic: 0.05,
+      legendary: 0.02,
+      divine: 0.01,
+      eternal: 0.001
+    };
+    const eternalPotion = potionPrizes.find(prize => prize.tier === 'eternal');
+    const availablePotion = Math.random() < potionSpawnChance.eternal
+      ? eternalPotion
+      : potionPrizes.filter(prize => prize.tier !== 'eternal').find(prize => Math.random() < potionSpawnChance[prize.tier]);
+    if (availablePotion) {
+      selectedPrizes.push(availablePotion);
+      if (availablePotion.tier === 'eternal') {
+        tickerTray.textContent = 'ETERNAL POTION SPAWNED ON THE WHEEL!';
+      }
+    } else {
+      selectedPrizes.push({ name: 'Empty', weight: 8, type: 'empty', c1: '#9b8f85', c2: '#514943' });
     }
 
     const regularPrizes = selectedPrizes.filter(prize => prize.type !== 'material' && prize.type !== 'potion');
@@ -95,6 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (shuffledSpecialPrizes[index]) wheelPrizes.push(shuffledSpecialPrizes[index]);
     });
   }
+
+  refreshWheelPrizes();
+  paintWheelMatrix();
 
   chrome.storage.local.get(['arcaneMasterStateV2'], (store) => {
     if (store.arcaneMasterStateV2) {
@@ -187,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function paintWheelMatrix() {
     if (!canvas || !ctx) return;
+    if (!wheelPrizes.length) refreshWheelPrizes();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const radius = canvas.width / 2;
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
@@ -348,7 +370,11 @@ document.addEventListener('DOMContentLoaded', () => {
       tickerTray.textContent = `Found: ${materialText}!`;
     } else if (landedSlice.type === 'potion') {
       runtimeState.inventory[landedSlice.tier]++;
-      tickerTray.textContent = `${landedSlice.name} won!`;
+      tickerTray.textContent = landedSlice.tier === 'eternal'
+        ? 'ETERNAL POTION SPAWNED! You found the rarest reward!'
+        : `${landedSlice.name} won!`;
+    } else if (landedSlice.type === 'empty') {
+      tickerTray.textContent = 'The wheel lands on an empty slot.';
     }
 
     if (runtimeState.activePotion) {
