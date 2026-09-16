@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <style>
     :root {
-      --bg: #0b0914;
-      --panel: rgba(25, 20, 48, 0.8);
-      --gold: #ffaa00;
-      --gem: #bf40ff;
-      --cash: #00ff88;
+      --bg: #fff7d6;
+      --panel: rgba(255, 255, 255, 0.8);
+      --gold: #e19a00;
+      --gem: #a342d4;
+      --ink: #3c2c4a;
       
       /* Hex values matching your custom image profiles */
-      --color-basic: #9ba1b0;
+      --color-basic: #777b89;
       --color-uncommon: #2ecc71;
       --color-rare: #0088ff;
       --color-mythic: #a832ff;
@@ -19,13 +19,13 @@
       --color-divine: #00ffff;
     }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
       width: 350px;
       box-sizing: border-box;
       padding: 16px;
       margin: 0;
-      background: radial-gradient(circle at top, #1c153f 0%, var(--bg) 85%);
-      color: #ffffff;
+      background: radial-gradient(circle at top, #fffdf3 0%, var(--bg) 75%, #ffe5a8 100%);
+      color: var(--ink);
       overflow-x: hidden;
       overflow-y: auto;
     }
@@ -35,7 +35,8 @@
       font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 2px;
-      text-shadow: 0 0 8px var(--color-divine);
+      color: #c47a00;
+      text-shadow: 0 2px 0 #fff;
     }
     .dashboard {
       display: grid;
@@ -44,17 +45,16 @@
       margin-bottom: 14px;
     }
     .stat-card {
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.75);
+      border: 1px solid #f1cf72;
       border-radius: 6px;
       padding: 8px 4px;
       text-align: center;
     }
-    .stat-lbl { font-size: 8px; color: #8c88af; text-transform: uppercase; margin-bottom: 2px; }
+    .stat-lbl { font-size: 8px; color: #9b7c48; text-transform: uppercase; margin-bottom: 2px; }
     .stat-val { font-size: 13px; font-weight: 800; font-family: monospace; }
     #coins-val { color: var(--gold); }
     #gems-val { color: var(--gem); }
-    #bal-val { color: var(--cash); }
 
     .wheel-container {
       position: relative;
@@ -64,9 +64,9 @@
     }
     canvas#wheel {
       display: block;
-      border: 4px solid #231b4d;
+      border: 5px solid #f0b928;
       border-radius: 50%;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      box-shadow: 0 8px 24px rgba(197, 135, 0, 0.28);
     }
     .wheel-ticker {
       position: absolute;
@@ -77,14 +77,14 @@
       height: 0;
       border-left: 8px solid transparent;
       border-right: 8px solid transparent;
-      border-top: 16px solid var(--color-mythic);
+      border-top: 16px solid #c47a00;
       z-index: 10;
     }
     button#spin-btn {
       width: 100%;
       padding: 12px;
-      background: linear-gradient(135deg, var(--color-mythic) 0%, #6312b3 100%);
-      color: #fff;
+      background: linear-gradient(135deg, #ffd85a 0%, #e39b00 100%);
+      color: #4b3200;
       border: none;
       border-radius: 8px;
       font-size: 12px;
@@ -92,25 +92,25 @@
       text-transform: uppercase;
       letter-spacing: 1px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(168,50,255,0.25);
+      box-shadow: 0 4px 12px rgba(218, 151, 0, 0.3);
       margin-bottom: 14px;
     }
-    button#spin-btn:disabled { background: #231d3d; color: #575275; box-shadow: none; cursor: not-allowed; }
+    button#spin-btn:disabled { background: #eadfbf; color: #a99a78; box-shadow: none; cursor: not-allowed; }
 
     .inventory-section {
       background: var(--panel);
       border-radius: 8px;
       padding: 10px;
-      border: 1px solid rgba(255,255,255,0.03);
+      border: 1px solid #f1cf72;
     }
-    .inv-title { font-size: 10px; text-transform: uppercase; color: #8c88af; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+    .inv-title { font-size: 10px; text-transform: uppercase; color: #9b7c48; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
     
     .item-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
+      border-bottom: 1px solid #f4e4b5;
     }
     .item-row:last-child { border-bottom: none; }
     
@@ -126,7 +126,7 @@
       display: grid;
       place-items: center;
       border-radius: 50%;
-      background: #15112e;
+      background: #fff9e7;
       border: 1px solid currentColor;
       font-size: 15px;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
@@ -140,22 +140,41 @@
       padding: 4px 8px;
       font-size: 9px;
       background: #15112e;
-      border: 1px solid #332963;
-      color: #fff;
+      border: 1px solid #d9b45c;
+      color: #604818;
       border-radius: 4px;
       cursor: pointer;
       text-transform: uppercase;
       font-weight: bold;
     }
-    .btn-action:hover { background: #1f1945; }
+    .btn-action:hover { background: #fff0b8; }
     .item-row.active .item-name { text-shadow: 0 0 5px currentColor; }
-    .item-row.active .btn-action { background: var(--color-mythic); border-color: var(--color-mythic); }
+    .item-row.active .btn-action { background: #ffd85a; border-color: #c98b00; }
+
+    .cycle-panel, .shop-section {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid #f1cf72;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .cycle-panel { display: flex; justify-content: space-between; align-items: center; font-size: 10px; }
+    .cycle-label { color: #9b7c48; text-transform: uppercase; font-weight: bold; }
+    #cycle-status { color: #c47a00; font-weight: bold; }
+    .shop-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+    .shop-copy { font-size: 10px; }
+    .shop-copy strong { display: block; font-size: 11px; }
+    .shop-button { min-width: 78px; }
+    .potion-shop { margin-top: 10px; }
+    .eternal-market { border-top: 1px solid #edc85e; margin-top: 8px; padding-top: 8px; }
+    .market-note { color: #9b7c48; font-size: 9px; margin: 0 0 5px; }
+    .sell-value { color: #a342d4; font-size: 9px; }
 
     #ticker-tray {
       margin-top: 10px;
       text-align: center;
       font-size: 10px;
-      color: #8c88af;
+      color: #9b7c48;
       font-weight: 500;
       min-height: 14px;
     }
@@ -167,7 +186,7 @@
   <div class="dashboard">
     <div class="stat-card"><div class="stat-lbl">Coins</div><div class="stat-val" id="coins-val">50</div></div>
     <div class="stat-card"><div class="stat-lbl">Gems</div><div class="stat-val" id="gems-val">0</div></div>
-    <div class="stat-card"><div class="stat-lbl">Balance</div><div class="stat-val" id="bal-val">$0.00</div></div>
+    <div class="stat-card"><div class="stat-lbl">Rolls</div><div class="stat-val" id="rolls-val">0 / 10</div></div>
   </div>
 
   <div class="wheel-container">
@@ -177,8 +196,77 @@
 
   <button id="spin-btn">Invoke Fate Roll</button>
 
+  <div class="cycle-panel">
+    <span class="cycle-label">Fate cycle</span>
+    <span id="cycle-status">Lucky odds</span>
+  </div>
+
+  <div class="shop-section">
+    <div class="inv-title">Upgrade Shop</div>
+    <div class="shop-row">
+      <div class="shop-copy"><strong>Fortune Charm</strong>Better rare rewards · Lv <span id="luck-level">0</span></div>
+      <button class="btn-action shop-button" id="buy-luck">Buy 25 coins</button>
+    </div>
+    <div class="shop-row">
+      <div class="shop-copy"><strong>Golden Touch</strong>More coins per win · Lv <span id="payout-level">0</span></div>
+      <button class="btn-action shop-button" id="buy-payout">Buy 40 coins</button>
+    </div>
+    <div class="inv-title potion-shop">Potion Market · Gems</div>
+    <div class="shop-row">
+      <div class="shop-copy"><strong>Uncommon Potion</strong>One luck charge</div>
+      <button class="btn-action shop-button" data-potion="uncommon" data-cost="12">12 gems</button>
+    </div>
+    <div class="shop-row">
+      <div class="shop-copy"><strong>Rare Potion</strong>One luck charge</div>
+      <button class="btn-action shop-button" data-potion="rare" data-cost="30">30 gems</button>
+    </div>
+    <div class="shop-row">
+      <div class="shop-copy"><strong>Mythic Potion</strong>One luck charge</div>
+      <button class="btn-action shop-button" data-potion="mythic" data-cost="70">70 gems</button>
+    </div>
+    <div class="shop-row">
+      <div class="shop-copy"><strong>Legendary Potion</strong>One luck charge</div>
+      <button class="btn-action shop-button" data-potion="legendary" data-cost="150">150 gems</button>
+    </div>
+    <div class="shop-row">
+      <div class="shop-copy"><strong>Divine Potion</strong>Ultimate luck charge</div>
+      <button class="btn-action shop-button" data-potion="divine" data-cost="400">400 gems</button>
+    </div>
+    <div class="eternal-market">
+      <p class="market-note">One market stock · Permanent crystal blessing</p>
+      <div class="shop-row">
+        <div class="shop-copy"><strong>Eternal Potion</strong>Diamond wheel · 1% jackpot chance</div>
+        <button class="btn-action shop-button" id="buy-eternal">1,000 gems</button>
+      </div>
+    </div>
+  </div>
+
   <div class="inventory-section">
     <div class="inv-title">Alchemical Potion Inventory</div>
+
+    <div class="item-row" id="row-eternal">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">◇</span>
+        <div class="item-name" style="color:#00a9c7;">Eternal Potion</div>
+      </div>
+      <div class="item-controls">
+        <div class="item-qty" id="qty-eternal">0</div>
+        <button class="btn-action" id="btn-eternal">Use</button>
+        <button class="btn-action" id="sell-eternal">Sell</button>
+      </div>
+    </div>
+
+    <div class="item-row" id="row-secret">
+      <div class="item-meta">
+        <span class="potion-asset" aria-hidden="true">✧</span>
+        <div class="item-name" style="color:#e06ad6;">Secret Potion</div>
+      </div>
+      <div class="item-controls">
+        <div class="item-qty" id="qty-secret">0</div>
+        <button class="btn-action" id="btn-secret">Arm</button>
+        <button class="btn-action" id="sell-secret">Sell</button>
+      </div>
+    </div>
     
     <!-- Tier 6: Divine -->
     <div class="item-row" id="row-divine">
@@ -189,6 +277,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-divine">0</div>
         <button class="btn-action" id="btn-divine">Arm</button>
+        <button class="btn-action" id="sell-divine">Sell</button>
       </div>
     </div>
 
@@ -201,6 +290,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-legendary">0</div>
         <button class="btn-action" id="btn-legendary">Arm</button>
+        <button class="btn-action" id="sell-legendary">Sell</button>
       </div>
     </div>
 
@@ -213,6 +303,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-mythic">0</div>
         <button class="btn-action" id="btn-mythic">Arm</button>
+        <button class="btn-action" id="sell-mythic">Sell</button>
       </div>
     </div>
 
@@ -225,6 +316,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-rare">0</div>
         <button class="btn-action" id="btn-rare">Arm</button>
+        <button class="btn-action" id="sell-rare">Sell</button>
       </div>
     </div>
 
@@ -237,6 +329,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-uncommon">0</div>
         <button class="btn-action" id="btn-uncommon">Arm</button>
+        <button class="btn-action" id="sell-uncommon">Sell</button>
       </div>
     </div>
 
@@ -249,8 +342,18 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-basic">0</div>
         <button class="btn-action" id="btn-basic">Arm</button>
+        <button class="btn-action" id="sell-basic">Sell</button>
       </div>
     </div>
+  </div>
+
+  <div class="shop-section">
+    <div class="inv-title">Spinner Loot · Sell For Gems</div>
+    <div class="shop-row"><div class="shop-copy"><strong id="loot-smallCoins-label">Small Coins × 0</strong><span class="sell-value">Sell for 1 gem</span></div><button class="btn-action shop-button" data-sell-item="smallCoins" data-sell-value="1">Sell</button></div>
+    <div class="shop-row"><div class="shop-copy"><strong id="loot-coinPouch-label">Coin Pouch × 0</strong><span class="sell-value">Sell for 5 gems</span></div><button class="btn-action shop-button" data-sell-item="coinPouch" data-sell-value="5">Sell</button></div>
+    <div class="shop-row"><div class="shop-copy"><strong id="loot-rareChest-label">Rare Chest × 0</strong><span class="sell-value">Sell for 12 gems</span></div><button class="btn-action shop-button" data-sell-item="rareChest" data-sell-value="12">Sell</button></div>
+    <div class="shop-row"><div class="shop-copy"><strong id="loot-gemCluster-label">Gem Cluster × 0</strong><span class="sell-value">Sell for 4 gems</span></div><button class="btn-action shop-button" data-sell-item="gemCluster" data-sell-value="4">Sell</button></div>
+    <div class="shop-row"><div class="shop-copy"><strong id="loot-divineRoyalty-label">Divine Royalty × 0</strong><span class="sell-value">Sell for 100 gems</span></div><button class="btn-action shop-button" data-sell-item="divineRoyalty" data-sell-value="100">Sell</button></div>
   </div>
 
   <div id="ticker-tray">Fate awaits your arrival.</div>

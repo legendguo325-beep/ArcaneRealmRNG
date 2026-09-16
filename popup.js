@@ -5,24 +5,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const tickerTray = document.getElementById('ticker-tray');
   const coinLabel = document.getElementById('coins-val');
   const gemLabel = document.getElementById('gems-val');
-  const balLabel = document.getElementById('bal-val');
+  const rollsLabel = document.getElementById('rolls-val');
+  const cycleStatus = document.getElementById('cycle-status');
+  const luckLevelLabel = document.getElementById('luck-level');
+  const payoutLevelLabel = document.getElementById('payout-level');
+  const buyLuckButton = document.getElementById('buy-luck');
+  const buyPayoutButton = document.getElementById('buy-payout');
+  const buyEternalButton = document.getElementById('buy-eternal');
+  const potionTiers = ['basic', 'uncommon', 'rare', 'mythic', 'legendary', 'divine', 'secret', 'eternal'];
+  const sellValues = { basic: 2, uncommon: 8, rare: 20, mythic: 50, legendary: 110, divine: 300, secret: 250, eternal: 500 };
+  const lootKeys = ['smallCoins', 'coinPouch', 'rareChest', 'gemCluster', 'divineRoyalty'];
 
   const defaultState = {
     coins: 50,
     gems: 0,
-    balance: 0.00,
-    inventory: { basic: 1, uncommon: 0, rare: 0, mythic: 0, legendary: 0, divine: 0 },
+    rolls: 0,
+    cycle: 1,
+    luckLevel: 0,
+    payoutLevel: 0,
+    eternalStock: 1,
+    eternalBlessing: false,
+    inventory: { basic: 1, uncommon: 0, rare: 0, mythic: 0, legendary: 0, divine: 0, secret: 0, eternal: 0 },
+    loot: { smallCoins: 0, coinPouch: 0, rareChest: 0, gemCluster: 0, divineRoyalty: 0 },
     activePotion: null
   };
   let runtimeState = structuredClone(defaultState);
 
   const basePrizes = [
-    { name: 'Common Trash', weight: 50, type: 'coins', val: 5, c1: '#1b1633', c2: '#120e24' },
-    { name: 'Uncommon Bronze', weight: 24, type: 'coins', val: 35, c1: '#1c3d27', c2: '#112417' },
-    { name: 'Rare Silver', weight: 14, type: 'coins', val: 80, c1: '#182b47', c2: '#0e1929' },
-    { name: 'Mythic Core', weight: 8, type: 'gems', val: 3, c1: '#371847', c2: '#1f0e29' },
-    { name: 'Balance Slip', weight: 3, type: 'balance', val: 0.75, c1: '#473d18', c2: '#29230e' },
-    { name: 'DIVINE ROYALTY', weight: 1, type: 'jackpot', val: 0, c1: '#184747', c2: '#0e2929' }
+    { name: 'Small Coins', weight: 50, type: 'coins', val: 5, c1: '#fff0a8', c2: '#e9b936' },
+    { name: 'Coin Pouch', weight: 24, type: 'coins', val: 35, c1: '#ffe27a', c2: '#d68b18' },
+    { name: 'Rare Chest', weight: 14, type: 'coins', val: 80, c1: '#bde8ff', c2: '#4a9ed8' },
+    { name: 'Gem Cluster', weight: 14, type: 'gems', val: 3, c1: '#f1c7ff', c2: '#a342d4' },
+    { name: 'DIVINE ROYALTY', weight: 1, type: 'jackpot', val: 0, c1: '#fff8c7', c2: '#e19a00' }
   ];
 
   let currentWheelAngle = 0;
@@ -34,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
       runtimeState = {
         ...defaultState,
         ...savedState,
-        inventory: { ...defaultState.inventory, ...(savedState.inventory || {}) }
+        inventory: { ...defaultState.inventory, ...(savedState.inventory || {}) },
+        loot: { ...defaultState.loot, ...(savedState.loot || {}) }
       };
     }
     refreshDisplayHUD();
@@ -48,11 +63,24 @@ document.addEventListener('DOMContentLoaded', () => {
   function refreshDisplayHUD() {
     coinLabel.textContent = runtimeState.coins;
     gemLabel.textContent = runtimeState.gems;
-    balLabel.textContent = `$${runtimeState.balance.toFixed(2)}`;
-    ['basic', 'uncommon', 'rare', 'mythic', 'legendary', 'divine'].forEach(tier => {
+    rollsLabel.textContent = `${runtimeState.rolls} / 10`;
+    cycleStatus.textContent = runtimeState.cycle % 2 === 1 ? `Lucky odds · Cycle ${runtimeState.cycle}` : `Risky odds · Cycle ${runtimeState.cycle}`;
+    luckLevelLabel.textContent = runtimeState.luckLevel;
+    payoutLevelLabel.textContent = runtimeState.payoutLevel;
+    buyLuckButton.textContent = `Buy ${25 + runtimeState.luckLevel * 25} coins`;
+    buyPayoutButton.textContent = `Buy ${40 + runtimeState.payoutLevel * 35} coins`;
+    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out';
+    buyEternalButton.disabled = runtimeState.eternalStock <= 0;
+    potionTiers.forEach(tier => {
       document.getElementById(`qty-${tier}`).textContent = runtimeState.inventory[tier] || 0;
-      document.getElementById(`row-${tier}`).classList.toggle('active', runtimeState.activePotion === tier);
-      document.getElementById(`btn-${tier}`).textContent = runtimeState.activePotion === tier ? 'Active' : 'Arm';
+      const row = document.getElementById(`row-${tier}`);
+      const button = document.getElementById(`btn-${tier}`);
+      row.classList.toggle('active', runtimeState.activePotion === tier || (tier === 'eternal' && runtimeState.eternalBlessing));
+      button.textContent = tier === 'eternal' && runtimeState.eternalBlessing ? 'Blessed' : (runtimeState.activePotion === tier ? 'Active' : 'Arm');
+      button.disabled = tier === 'eternal' && runtimeState.eternalBlessing;
+    });
+    lootKeys.forEach(key => {
+      document.getElementById(`loot-${key}-label`).textContent = `${key.replace(/([A-Z])/g, ' $1')} × ${runtimeState.loot[key] || 0}`;
     });
   }
 
@@ -68,13 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (let i = 0; i < basePrizes.length; i++) {
       const item = basePrizes[i];
+      const eternalColors = ['#dffcff', '#78dce8', '#f8ffff', '#75bfd8'];
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.arc(0, 0, radius - 2, i * sectorRadians, (i + 1) * sectorRadians);
       
       let radialGlowGradient = ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
-      radialGlowGradient.addColorStop(0, item.c1);
-      radialGlowGradient.addColorStop(1, item.c2);
+      radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : item.c1);
+      radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : item.c2);
       ctx.fillStyle = radialGlowGradient;
       ctx.fill();
 
@@ -83,22 +112,22 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.stroke();
 
       ctx.save();
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = runtimeState.eternalBlessing ? '#075d79' : '#ffffff';
       ctx.font = 'bold 8px sans-serif';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       ctx.rotate(i * sectorRadians + sectorRadians / 2);
-      ctx.fillText(item.name, radius - 12, 0);
+      ctx.fillText(runtimeState.eternalBlessing ? `◇ ${item.name}` : item.name, radius - 12, 0);
       ctx.restore();
     }
     ctx.restore();
 
     ctx.beginPath();
     ctx.arc(radius, radius, 8, 0, 2 * Math.PI);
-    ctx.fillStyle = '#070512';
+    ctx.fillStyle = runtimeState.eternalBlessing ? '#eaffff' : '#fff7d6';
     ctx.fill();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = '#a832ff';
+    ctx.strokeStyle = runtimeState.eternalBlessing ? '#00b9d4' : '#c47a00';
     ctx.stroke();
   }
 
@@ -106,23 +135,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let pool = [];
     basePrizes.forEach((slice, segmentIndex) => {
       let calcWeight = slice.weight;
-      
-      // Tier Luck Manipulation Table
-      if (runtimeState.activePotion === 'basic' && slice.name === 'Common Trash') calcWeight = 0;
+      const luckyCycle = runtimeState.cycle % 2 === 1;
+      if (slice.type === 'jackpot') calcWeight *= luckyCycle ? 1.5 : 0.6;
+      if (slice.type === 'gems') calcWeight *= luckyCycle ? 1.5 : 0.85;
+      if (slice.type === 'coins' && slice.val >= 35) calcWeight *= 1 + runtimeState.luckLevel * 0.12;
+      if (slice.type === 'coins' && slice.val === 5 && !luckyCycle) calcWeight *= 1.35;
+      if (runtimeState.eternalBlessing) {
+        if (slice.type === 'jackpot') calcWeight *= 2;
+        if (slice.type === 'gems') calcWeight *= 1.8;
+        if (slice.type === 'coins' && slice.val >= 35) calcWeight *= 1.15;
+      }
+
+      if (runtimeState.activePotion === 'basic' && slice.name === 'Small Coins') calcWeight = 0;
       else if (runtimeState.activePotion === 'uncommon') {
         if (slice.name === 'Uncommon Bronze') calcWeight *= 3;
       }
       else if (runtimeState.activePotion === 'rare') {
-        if (slice.type === 'gems' || slice.type === 'balance') calcWeight *= 2;
+        if (slice.type === 'gems') calcWeight *= 2;
       } else if (runtimeState.activePotion === 'mythic') {
         if (slice.type === 'jackpot') calcWeight *= 3;
         if (slice.type === 'gems') calcWeight *= 2;
       } else if (runtimeState.activePotion === 'legendary') {
         if (slice.type === 'jackpot') calcWeight *= 6;
-        if (slice.type === 'balance') calcWeight *= 3;
       } else if (runtimeState.activePotion === 'divine') {
         if (slice.type === 'jackpot') calcWeight *= 12;
-        if (slice.type === 'balance') calcWeight *= 6;
+      } else if (runtimeState.activePotion === 'secret') {
+        if (slice.type === 'jackpot') calcWeight *= 4;
+        if (slice.type === 'gems') calcWeight *= 3;
       }
       
       for (let i = 0; i < calcWeight; i++) pool.push(segmentIndex);
@@ -168,28 +207,35 @@ document.addEventListener('DOMContentLoaded', () => {
     spinBtn.disabled = false;
     
     if (landedSlice.type === 'coins') {
-      runtimeState.coins += landedSlice.val;
-      tickerTray.textContent = `Claimed: +${landedSlice.val} Coins!`;
+      const payout = landedSlice.val * (1 + runtimeState.payoutLevel * 0.25);
+      runtimeState.coins += payout;
+      runtimeState.loot[landedSlice.name === 'Small Coins' ? 'smallCoins' : landedSlice.name === 'Coin Pouch' ? 'coinPouch' : 'rareChest']++;
+      tickerTray.textContent = `Claimed: +${payout} Coins!`;
     } else if (landedSlice.type === 'gems') {
       runtimeState.gems += landedSlice.val;
+      runtimeState.loot.gemCluster++;
       tickerTray.textContent = `Claimed: +${landedSlice.val} Gems!`;
-    } else if (landedSlice.type === 'balance') {
-      runtimeState.balance += landedSlice.val;
-      tickerTray.textContent = `Claimed: +$${landedSlice.val.toFixed(2)} Balance!`;
     } else if (landedSlice.type === 'jackpot') {
-      // Jackpot event splits reward distributions down tier arrays
+      runtimeState.loot.divineRoyalty++;
       const roll = Math.random() * 100;
-      if (roll < 40) { runtimeState.inventory.uncommon++; tickerTray.textContent = "JACKPOT! Uncommon Potion unlocked!"; }
-      else if (roll < 70) { runtimeState.inventory.rare++; tickerTray.textContent = "JACKPOT! Rare Potion unlocked!"; }
-      else if (roll < 90) { runtimeState.inventory.mythic++; tickerTray.textContent = "JACKPOT! Mythic Potion unlocked!"; }
-      else if (roll < 98) { runtimeState.inventory.legendary++; tickerTray.textContent = "JACKPOT! Legendary Potion unlocked!"; }
-      else { runtimeState.inventory.divine++; tickerTray.textContent = "💥 UNREAL LAND! Divine Potion unlocked!"; }
+      if (roll < 1) { runtimeState.inventory.eternal++; tickerTray.textContent = 'ETERNAL DROP! A crystal potion has appeared!'; }
+      else if (roll < 5) { runtimeState.inventory.secret++; tickerTray.textContent = 'SECRET DROP! A Secret Potion has appeared!'; }
+      else if (roll < 40) { runtimeState.inventory.uncommon++; tickerTray.textContent = 'JACKPOT! Uncommon Potion unlocked!'; }
+      else if (roll < 70) { runtimeState.inventory.rare++; tickerTray.textContent = 'JACKPOT! Rare Potion unlocked!'; }
+      else if (roll < 90) { runtimeState.inventory.mythic++; tickerTray.textContent = 'JACKPOT! Mythic Potion unlocked!'; }
+      else if (roll < 98) { runtimeState.inventory.legendary++; tickerTray.textContent = 'JACKPOT! Legendary Potion unlocked!'; }
+      else { runtimeState.inventory.divine++; tickerTray.textContent = 'UNREAL LAND! Divine Potion unlocked!'; }
     }
 
-    // Potion exhaustion logic loops
     if (runtimeState.activePotion) {
       runtimeState.inventory[runtimeState.activePotion]--;
       runtimeState.activePotion = null;
+    }
+    runtimeState.rolls++;
+    if (runtimeState.rolls >= 10) {
+      runtimeState.rolls = 0;
+      runtimeState.cycle++;
+      tickerTray.textContent += runtimeState.cycle % 2 === 1 ? ' New lucky cycle!' : ' New risky cycle!';
     }
     refreshDisplayHUD();
     saveStateToLocalDisk();
@@ -207,9 +253,106 @@ document.addEventListener('DOMContentLoaded', () => {
     saveStateToLocalDisk();
   }
 
+  function useEternalPotion() {
+    if (isMotionActive || runtimeState.eternalBlessing) return;
+    if (runtimeState.inventory.eternal <= 0) {
+      tickerTray.textContent = 'No Eternal Potions owned.';
+      return;
+    }
+    runtimeState.inventory.eternal--;
+    runtimeState.eternalBlessing = true;
+    runtimeState.inventory.secret++;
+    tickerTray.textContent = 'ETERNAL BLESSING! The wheel became crystal, and a Secret Potion appeared.';
+    refreshDisplayHUD();
+    paintWheelMatrix();
+    saveStateToLocalDisk();
+  }
+
+  function buyUpgrade(type) {
+    if (isMotionActive) return;
+    const levelKey = type === 'luck' ? 'luckLevel' : 'payoutLevel';
+    const cost = type === 'luck' ? 25 + runtimeState.luckLevel * 25 : 40 + runtimeState.payoutLevel * 35;
+    if (runtimeState.coins < cost) {
+      tickerTray.textContent = `You need ${cost - runtimeState.coins} more coins.`;
+      return;
+    }
+    runtimeState.coins -= cost;
+    runtimeState[levelKey]++;
+    tickerTray.textContent = type === 'luck' ? 'Fortune Charm upgraded!' : 'Golden Touch upgraded!';
+    refreshDisplayHUD();
+    saveStateToLocalDisk();
+  }
+
+  function buyPotion(tier, cost) {
+    if (isMotionActive) return;
+    if (runtimeState.gems < cost) {
+      tickerTray.textContent = `You need ${cost - runtimeState.gems} more gems.`;
+      return;
+    }
+    runtimeState.gems -= cost;
+    runtimeState.inventory[tier]++;
+    tickerTray.textContent = `${tier} Potion added to your inventory!`;
+    refreshDisplayHUD();
+    saveStateToLocalDisk();
+  }
+
+  function buyEternalPotion() {
+    if (isMotionActive || runtimeState.eternalStock <= 0) return;
+    if (runtimeState.gems < 1000) {
+      tickerTray.textContent = `You need ${1000 - runtimeState.gems} more gems.`;
+      return;
+    }
+    runtimeState.gems -= 1000;
+    runtimeState.inventory.eternal++;
+    runtimeState.eternalStock--;
+    tickerTray.textContent = 'Eternal Potion secured. Use it for a permanent crystal blessing.';
+    refreshDisplayHUD();
+    saveStateToLocalDisk();
+  }
+
+  function sellPotion(tier) {
+    if (runtimeState.activePotion === tier) {
+      tickerTray.textContent = 'Unequip that potion before selling it.';
+      return;
+    }
+    if (isMotionActive || runtimeState.inventory[tier] <= 0) {
+      tickerTray.textContent = `No ${tier} Potions available to sell.`;
+      return;
+    }
+    runtimeState.inventory[tier]--;
+    runtimeState.gems += sellValues[tier];
+    tickerTray.textContent = `${tier} Potion sold for ${sellValues[tier]} gems.`;
+    refreshDisplayHUD();
+    saveStateToLocalDisk();
+  }
+
+  function sellLoot(key, value) {
+    if (isMotionActive || runtimeState.loot[key] <= 0) {
+      tickerTray.textContent = 'That loot item is not in your collection.';
+      return;
+    }
+    runtimeState.loot[key]--;
+    runtimeState.gems += value;
+    tickerTray.textContent = `Loot sold for ${value} gems.`;
+    refreshDisplayHUD();
+    saveStateToLocalDisk();
+  }
+
   spinBtn.addEventListener('click', beginMotionSequence);
-  ['basic', 'uncommon', 'rare', 'mythic', 'legendary', 'divine'].forEach(tier => {
+  buyLuckButton.addEventListener('click', () => buyUpgrade('luck'));
+  buyPayoutButton.addEventListener('click', () => buyUpgrade('payout'));
+  buyEternalButton.addEventListener('click', buyEternalPotion);
+  document.querySelectorAll('[data-potion]').forEach(button => {
+    button.addEventListener('click', () => buyPotion(button.dataset.potion, Number(button.dataset.cost)));
+  });
+  ['basic', 'uncommon', 'rare', 'mythic', 'legendary', 'divine', 'secret'].forEach(tier => {
     document.getElementById(`btn-${tier}`).addEventListener('click', () => toggleInventoryBuff(tier));
+    document.getElementById(`sell-${tier}`).addEventListener('click', () => sellPotion(tier));
+  });
+  document.getElementById('btn-eternal').addEventListener('click', useEternalPotion);
+  document.getElementById('sell-eternal').addEventListener('click', () => sellPotion('eternal'));
+  document.querySelectorAll('[data-sell-item]').forEach(button => {
+    button.addEventListener('click', () => sellLoot(button.dataset.sellItem, Number(button.dataset.sellValue)));
   });
 });
 
