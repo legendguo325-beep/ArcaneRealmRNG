@@ -16,15 +16,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const marketTiers = ['uncommon', 'rare', 'mythic', 'legendary', 'divine'];
   const dailyMarketDefaults = { uncommon: 3, rare: 2, mythic: 2, legendary: 1, divine: 1 };
   const sellValues = { basic: 2, uncommon: 8, rare: 20, mythic: 50, legendary: 110, divine: 300, secret: 250, eternal: 500 };
-  const lootKeys = ['smallCoins', 'coinPouch', 'rareChest', 'gemCluster', 'divineRoyalty'];
+  const lootKeys = ['smallCoins', 'coinPouch', 'rareChest', 'materialChest', 'gemCluster', 'divineRoyalty'];
   const materialKeys = ['timber', 'copperOre', 'coal', 'bronzeIngot', 'silverOre', 'silverIngot', 'crystalShard', 'goldOre'];
   const wheelMilestones = [
     { name: 'Broken Wooden Wheel', recipe: null },
-    { name: 'Bronze Wheel', recipe: { timber: 18, copperOre: 12, coal: 8 }, label: '18 Timber, 12 Copper Ore, 8 Coal', bonus: 0.08 },
-    { name: 'Silver Wheel', recipe: { bronzeIngot: 24, silverOre: 18, crystalShard: 12 }, label: '24 Bronze Ingots, 18 Silver Ore, 12 Crystal Shards', bonus: 0.16 },
-    { name: 'Gold Wheel', recipe: { silverIngot: 32, goldOre: 24, crystalShard: 18 }, label: '32 Silver Ingots, 24 Gold Ore, 18 Crystal Shards', bonus: 0.26 }
+    { name: 'Bronze Wheel', recipe: { timber: 27, copperOre: 18, coal: 12 }, label: '27 Timber, 18 Copper Ore, 12 Coal', bonus: 0.08 },
+    { name: 'Silver Wheel', recipe: { bronzeIngot: 36, silverOre: 27, crystalShard: 18 }, label: '36 Bronze Ingots, 27 Silver Ore, 18 Crystal Shards', bonus: 0.16 },
+    { name: 'Gold Wheel', recipe: { silverIngot: 48, goldOre: 36, crystalShard: 27 }, label: '48 Silver Ingots, 36 Gold Ore, 27 Crystal Shards', bonus: 0.26 }
   ];
   const autoSellValues = { smallCoins: 1, coinPouch: 5, rareChest: 12, gemCluster: 4, divineRoyalty: 100 };
+  const materialNames = {
+    timber: 'Timber',
+    copperOre: 'Copper Ore',
+    coal: 'Coal',
+    bronzeIngot: 'Bronze Ingot',
+    silverOre: 'Silver Ore',
+    silverIngot: 'Silver Ingot',
+    crystalShard: 'Crystal Shard',
+    goldOre: 'Gold Ore'
+  };
 
   const defaultState = {
     coins: 50,
@@ -39,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     eternalBlessing: false,
     wheelTier: 0,
     inventory: { basic: 1, uncommon: 0, rare: 0, mythic: 0, legendary: 0, divine: 0, secret: 0, eternal: 0 },
-    loot: { smallCoins: 0, coinPouch: 0, rareChest: 0, gemCluster: 0, divineRoyalty: 0 },
+    loot: { smallCoins: 0, coinPouch: 0, rareChest: 0, materialChest: 0, gemCluster: 0, divineRoyalty: 0 },
     materials: { timber: 0, copperOre: 0, coal: 0, bronzeIngot: 0, silverOre: 0, silverIngot: 0, crystalShard: 0, goldOre: 0 },
     autoSell: { smallCoins: false, coinPouch: false, rareChest: false, gemCluster: false, divineRoyalty: false },
     activePotion: null
@@ -47,10 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let runtimeState = structuredClone(defaultState);
 
   const basePrizes = [
-    { name: 'Small Coins', weight: 50, type: 'coins', val: 5, materials: { timber: 1 }, c1: '#fff0a8', c2: '#e9b936' },
-    { name: 'Coin Pouch', weight: 24, type: 'coins', val: 35, materials: { copperOre: 1, coal: 1 }, c1: '#ffe27a', c2: '#d68b18' },
-    { name: 'Rare Chest', weight: 14, type: 'coins', val: 80, materials: { bronzeIngot: 1, silverOre: 1, silverIngot: 1 }, c1: '#bde8ff', c2: '#4a9ed8' },
-    { name: 'Gem Cluster', weight: 14, type: 'gems', val: 3, materials: { crystalShard: 1 }, c1: '#f1c7ff', c2: '#a342d4' },
+    { name: 'Small Coins', lootKey: 'smallCoins', weight: 50, type: 'coins', val: 4, materials: { timber: 1 }, c1: '#fff0a8', c2: '#e9b936' },
+    { name: 'Coin Pouch', lootKey: 'coinPouch', weight: 24, type: 'coins', val: 25, materials: { copperOre: 1, coal: 1 }, c1: '#ffe27a', c2: '#d68b18' },
+    { name: 'Rare Chest', lootKey: 'rareChest', weight: 14, type: 'coins', val: 60, materials: { bronzeIngot: 1, silverOre: 1, silverIngot: 1 }, c1: '#bde8ff', c2: '#4a9ed8' },
+    { name: 'Material Chest', lootKey: 'materialChest', weight: 5, type: 'materialChest', c1: '#d8c2a4', c2: '#8b5e34' },
+    { name: 'Gem Cluster', weight: 14, type: 'gems', val: 2, materials: { crystalShard: 1 }, c1: '#f1c7ff', c2: '#a342d4' },
     { name: 'Divine Royalty', weight: 1, type: 'jackpot', val: 0, materials: { goldOre: 2 }, c1: '#fff8c7', c2: '#e19a00' },
     { name: 'Uncommon Potion', weight: 7, type: 'potion', tier: 'uncommon', c1: '#d8ffd9', c2: '#2ecc71' },
     { name: 'Rare Potion', weight: 4, type: 'potion', tier: 'rare', c1: '#d7f2ff', c2: '#0088ff' },
@@ -61,6 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentWheelAngle = 0;
   let isMotionActive = false;
+
+  function getWheelLabel(prize) {
+    const reward = prize.type === 'coins' ? `${prize.val} Coins` : prize.name;
+    const materials = Object.keys(prize.materials || {}).map(key => materialNames[key]);
+    return materials.length ? `${reward} + ${materials.join(' + ')}` : reward;
+  }
 
   chrome.storage.local.get(['arcaneMasterStateV2'], (store) => {
     if (store.arcaneMasterStateV2) {
@@ -92,8 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cycleStatus.textContent = runtimeState.cooldownUntil > Date.now() ? `Cooldown · ${Math.ceil((runtimeState.cooldownUntil - Date.now()) / 1000)}s` : (runtimeState.cycle % 2 === 1 ? `Lucky odds · Cycle ${runtimeState.cycle}` : `Risky odds · Cycle ${runtimeState.cycle}`);
     luckLevelLabel.textContent = runtimeState.luckLevel;
     payoutLevelLabel.textContent = runtimeState.payoutLevel;
-    buyLuckButton.textContent = `Buy ${75 + runtimeState.luckLevel * 75} coins`;
-    buyPayoutButton.textContent = `Buy ${100 + runtimeState.payoutLevel * 100} coins`;
+    buyLuckButton.textContent = `Buy ${100 + runtimeState.luckLevel * 150} coins`;
+    buyPayoutButton.textContent = `Buy ${150 + runtimeState.payoutLevel * 200} coins`;
     buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out today';
     buyEternalButton.disabled = runtimeState.eternalStock <= 0;
     potionTiers.forEach(tier => {
@@ -190,7 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       ctx.rotate(i * sectorRadians + sectorRadians / 2);
-      ctx.fillText(runtimeState.eternalBlessing ? `◇ ${item.name}` : item.name, radius - 12, 0);
+      const wheelLabel = runtimeState.eternalBlessing ? `◇ ${getWheelLabel(item)}` : getWheelLabel(item);
+      const labelParts = wheelLabel.split(' + ');
+      labelParts.forEach((part, partIndex) => {
+        ctx.fillText(part, radius - 12, (partIndex - (labelParts.length - 1) / 2) * 9);
+      });
       ctx.restore();
     }
     ctx.restore();
@@ -222,9 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (slice.type === 'coins' && slice.val >= 35) calcWeight *= 1.15;
       }
 
-      if (runtimeState.activePotion === 'basic' && slice.name === 'Small Coins') calcWeight = 0;
+      if (runtimeState.activePotion === 'basic' && slice.lootKey === 'smallCoins') calcWeight = 0;
       else if (runtimeState.activePotion === 'uncommon') {
-        if (slice.name === 'Coin Pouch') calcWeight *= 3;
+        if (slice.lootKey === 'coinPouch') calcWeight *= 3;
       }
       else if (runtimeState.activePotion === 'rare') {
         if (slice.type === 'gems') calcWeight *= 2;
@@ -286,12 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
     spinBtn.disabled = false;
     
     if (landedSlice.type === 'coins') {
-      const payout = Math.round(landedSlice.val * (1 + runtimeState.payoutLevel * 0.25));
+      const payout = Math.round(landedSlice.val * (1 + runtimeState.payoutLevel * 0.15));
       runtimeState.coins += payout;
-      runtimeState.loot[landedSlice.name === 'Small Coins' ? 'smallCoins' : landedSlice.name === 'Coin Pouch' ? 'coinPouch' : 'rareChest']++;
+      runtimeState.loot[landedSlice.lootKey]++;
       addMaterials(landedSlice.materials);
-      autoSellLoot(landedSlice.name === 'Small Coins' ? 'smallCoins' : landedSlice.name === 'Coin Pouch' ? 'coinPouch' : 'rareChest');
-      tickerTray.textContent = `Claimed: +${payout} Coins!`;
+      autoSellLoot(landedSlice.lootKey);
+      const materialText = Object.keys(landedSlice.materials || {}).map(key => materialNames[key]).join(', ');
+      tickerTray.textContent = `Claimed: +${payout} Coins${materialText ? ` and ${materialText}` : ''}!`;
     } else if (landedSlice.type === 'gems') {
       runtimeState.gems += landedSlice.val;
       runtimeState.loot.gemCluster++;
@@ -310,6 +332,10 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (roll < 90) { runtimeState.inventory.mythic++; tickerTray.textContent = 'JACKPOT! Mythic Potion unlocked!'; }
       else if (roll < 98) { runtimeState.inventory.legendary++; tickerTray.textContent = 'JACKPOT! Legendary Potion unlocked!'; }
       else { runtimeState.inventory.divine++; tickerTray.textContent = 'UNREAL LAND! Divine Potion unlocked!'; }
+    } else if (landedSlice.type === 'materialChest') {
+      runtimeState.loot.materialChest++;
+      const foundMaterials = openMaterialChest();
+      tickerTray.textContent = `Opened Material Chest: ${foundMaterials.join(', ')}!`;
     } else if (landedSlice.type === 'potion') {
       runtimeState.inventory[landedSlice.tier]++;
       tickerTray.textContent = `${landedSlice.name} won!`;
@@ -323,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (runtimeState.rolls >= 10) {
       runtimeState.rolls = 0;
       runtimeState.cycle++;
-      runtimeState.cooldownUntil = Date.now() + 60000;
+      runtimeState.cooldownUntil = Date.now() + 20000;
       tickerTray.textContent += runtimeState.cycle % 2 === 1 ? ' New lucky cycle!' : ' New risky cycle!';
       updateCooldownDisplay();
     }
@@ -333,8 +359,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function addMaterials(materials) {
     Object.entries(materials || {}).forEach(([key, amount]) => {
-      runtimeState.materials[key] += amount;
+      const dropAmount = amount === 1 && Math.random() < 0.12 ? 2 : amount;
+      runtimeState.materials[key] += dropAmount;
     });
+  }
+
+  function openMaterialChest() {
+    const foundMaterials = [];
+    for (let dropIndex = 0; dropIndex < 3; dropIndex++) {
+      const materialKey = materialKeys[Math.floor(Math.random() * materialKeys.length)];
+      runtimeState.materials[materialKey]++;
+      foundMaterials.push(`1 ${materialNames[materialKey]}`);
+    }
+    return foundMaterials;
   }
 
   function autoSellLoot(key) {
@@ -391,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function buyUpgrade(type) {
     if (isMotionActive) return;
     const levelKey = type === 'luck' ? 'luckLevel' : 'payoutLevel';
-    const cost = type === 'luck' ? 75 + runtimeState.luckLevel * 75 : 100 + runtimeState.payoutLevel * 100;
+    const cost = type === 'luck' ? 100 + runtimeState.luckLevel * 150 : 150 + runtimeState.payoutLevel * 200;
     if (runtimeState.coins < cost) {
       tickerTray.textContent = `You need ${cost - runtimeState.coins} more coins.`;
       return;
