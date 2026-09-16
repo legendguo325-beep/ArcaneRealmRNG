@@ -71,13 +71,35 @@ document.addEventListener('DOMContentLoaded', () => {
     { name: 'Divine Potion', weight: 0.5, type: 'potion', tier: 'divine', c1: '#dfffff', c2: '#00a9c7' }
   ];
 
+  let wheelPrizes = [];
   let currentWheelAngle = 0;
   let isMotionActive = false;
 
   function getWheelLabel(prize) {
     const reward = prize.type === 'coins' ? `${prize.val} Coins` : prize.name;
-    const materials = Object.keys(prize.materials || {}).map(key => materialNames[key]);
+    const materials = Object.keys(prize.materials || {})
+      .map(key => materialNames[key])
+      .filter(materialName => materialName !== prize.name);
     return materials.length ? `${reward} + ${materials.join(' + ')}` : reward;
+  }
+
+  function refreshWheelPrizes() {
+    const permanentPrizes = basePrizes.filter(prize => prize.type !== 'potion');
+    const potionPrizes = basePrizes.filter(prize => prize.type === 'potion');
+    const selectedPrizes = [...permanentPrizes];
+    if (Math.random() < 0.35) {
+      selectedPrizes.push(potionPrizes[Math.floor(Math.random() * potionPrizes.length)]);
+    }
+
+    const regularPrizes = selectedPrizes.filter(prize => prize.type !== 'material' && prize.type !== 'potion');
+    const specialPrizes = selectedPrizes.filter(prize => prize.type === 'material' || prize.type === 'potion');
+    const shuffledRegularPrizes = [...regularPrizes].sort(() => Math.random() - 0.5);
+    const shuffledSpecialPrizes = [...specialPrizes].sort(() => Math.random() - 0.5);
+    wheelPrizes = [];
+    shuffledRegularPrizes.forEach((prize, index) => {
+      wheelPrizes.push(prize);
+      if (shuffledSpecialPrizes[index]) wheelPrizes.push(shuffledSpecialPrizes[index]);
+    });
   }
 
   chrome.storage.local.get(['arcaneMasterStateV2'], (store) => {
@@ -95,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     restockMarketIfNeeded();
     refreshDisplayHUD();
+    refreshWheelPrizes();
     paintWheelMatrix();
     updateCooldownDisplay();
   });
@@ -172,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas || !ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const radius = canvas.width / 2;
-    const sectorRadians = (2 * Math.PI) / basePrizes.length;
+    const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
     const wheelPalettes = [
       ['#d2a66f', '#81502d'],
       ['#e8a85c', '#8b451f'],
@@ -184,8 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.translate(radius, radius);
     ctx.rotate(currentWheelAngle);
 
-    for (let i = 0; i < basePrizes.length; i++) {
-      const item = basePrizes[i];
+    for (let i = 0; i < wheelPrizes.length; i++) {
+      const item = wheelPrizes[i];
       const eternalColors = ['#dffcff', '#78dce8', '#f8ffff', '#75bfd8'];
       const tierColors = wheelPalettes[runtimeState.wheelTier] || wheelPalettes[0];
       ctx.beginPath();
@@ -228,20 +251,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function processStateProbabilityIndex() {
     let pool = [];
-    basePrizes.forEach((slice, segmentIndex) => {
+    wheelPrizes.forEach((slice, segmentIndex) => {
       let calcWeight = slice.weight;
       const luckyCycle = runtimeState.cycle % 2 === 1;
       if (slice.type === 'jackpot') calcWeight *= luckyCycle ? 1.5 : 0.6;
       if (slice.type === 'gems') calcWeight *= luckyCycle ? 1.5 : 0.85;
-      if (slice.type === 'coins' && slice.val >= 35) calcWeight *= 1 + runtimeState.luckLevel * 0.12;
-      if (slice.type === 'coins' && slice.val === 5 && !luckyCycle) calcWeight *= 1.35;
+      if (slice.type === 'coins' && slice.val >= 30) calcWeight *= 1 + runtimeState.luckLevel * 0.12;
+      if (slice.type === 'coins' && slice.val === 4 && !luckyCycle) calcWeight *= 1.35;
       if (slice.type === 'potion') calcWeight *= 1 + runtimeState.luckLevel * 0.1;
       const wheelBonus = wheelMilestones[runtimeState.wheelTier]?.bonus || 0;
       if (slice.type === 'gems' || slice.type === 'potion') calcWeight *= 1 + wheelBonus;
       if (runtimeState.eternalBlessing) {
         if (slice.type === 'jackpot') calcWeight *= 2;
         if (slice.type === 'gems') calcWeight *= 1.8;
-        if (slice.type === 'coins' && slice.val >= 35) calcWeight *= 1.15;
+        if (slice.type === 'coins' && slice.val >= 30) calcWeight *= 1.15;
       }
 
       if (runtimeState.activePotion === 'basic' && slice.type === 'coins' && slice.val === 4) calcWeight = 0;
@@ -277,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tickerTray.textContent = "Rolling your fate...";
 
     const winIdx = processStateProbabilityIndex();
-    const sectorRadians = (2 * Math.PI) / basePrizes.length;
+    const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
     const sliceTargetArc = (3.5 * Math.PI - (winIdx * sectorRadians + sectorRadians / 2)) % (2 * Math.PI);
     const continuousRotations = (Math.floor(Math.random() * 3) + 6) * 2 * Math.PI;
     const finalRotationalTarget = continuousRotations + sliceTargetArc;
@@ -297,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (progressTracker < 1) {
         requestAnimationFrame(renderStepFrame);
       } else {
-        grantTargetReward(basePrizes[winIdx]);
+        grantTargetReward(wheelPrizes[winIdx]);
       }
     }
     requestAnimationFrame(renderStepFrame);
@@ -349,6 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
       runtimeState.activePotion = null;
     }
     runtimeState.rolls++;
+    if (runtimeState.rolls % 5 === 0) {
+      refreshWheelPrizes();
+      paintWheelMatrix();
+      tickerTray.textContent += ' The wheel has refreshed.';
+    }
     if (runtimeState.rolls >= 10) {
       runtimeState.rolls = 0;
       runtimeState.cycle++;
