@@ -133,6 +133,7 @@
     }
 
     .item-name { font-size: 11px; font-weight: bold; }
+    .potion-detail { display: block; font-size: 8px; font-weight: normal; color: #9b7c48; margin-top: 2px; }
     .item-controls { display: flex; align-items: center; gap: 8px; }
     .item-qty { font-size: 11px; font-family: monospace; font-weight: bold; color: #fff; width: 14px; text-align: center; }
     
@@ -166,6 +167,13 @@
     .shop-copy strong { display: block; font-size: 11px; }
     .shop-button { min-width: 78px; }
     .potion-shop { margin-top: 10px; }
+    .material-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px 10px; }
+    .material-entry { display: flex; justify-content: space-between; font-size: 10px; padding: 3px 0; border-bottom: 1px solid #f4e4b5; }
+    .material-count { color: #a36b00; font-weight: bold; }
+    .recipe { color: #9b7c48; font-size: 9px; margin: 4px 0 7px; line-height: 1.35; }
+    .milestone { color: #c47a00; font-size: 10px; font-weight: bold; }
+    .auto-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 10px; }
+    .auto-row input { accent-color: #d69a00; }
     .eternal-market { border-top: 1px solid #edc85e; margin-top: 8px; padding-top: 8px; }
     .market-note { color: #9b7c48; font-size: 9px; margin: 0 0 5px; }
     .sell-value { color: #a342d4; font-size: 9px; }
@@ -205,32 +213,32 @@
     <div class="inv-title">Upgrade Shop</div>
     <div class="shop-row">
       <div class="shop-copy"><strong>Fortune Charm</strong>Better rare rewards · Lv <span id="luck-level">0</span></div>
-      <button class="btn-action shop-button" id="buy-luck">Buy 25 coins</button>
+      <button class="btn-action shop-button" id="buy-luck">Buy 75 coins</button>
     </div>
     <div class="shop-row">
       <div class="shop-copy"><strong>Golden Touch</strong>More coins per win · Lv <span id="payout-level">0</span></div>
-      <button class="btn-action shop-button" id="buy-payout">Buy 40 coins</button>
+      <button class="btn-action shop-button" id="buy-payout">Buy 100 coins</button>
     </div>
     <div class="inv-title potion-shop">Potion Market · Gems</div>
     <div class="shop-row">
       <div class="shop-copy"><strong>Uncommon Potion</strong>One luck charge</div>
-      <button class="btn-action shop-button" data-potion="uncommon" data-cost="12">12 gems</button>
+      <button class="btn-action shop-button" data-potion="uncommon" data-cost="12">12 gems · 3 left</button>
     </div>
     <div class="shop-row">
       <div class="shop-copy"><strong>Rare Potion</strong>One luck charge</div>
-      <button class="btn-action shop-button" data-potion="rare" data-cost="30">30 gems</button>
+      <button class="btn-action shop-button" data-potion="rare" data-cost="30">30 gems · 2 left</button>
     </div>
     <div class="shop-row">
       <div class="shop-copy"><strong>Mythic Potion</strong>One luck charge</div>
-      <button class="btn-action shop-button" data-potion="mythic" data-cost="70">70 gems</button>
+      <button class="btn-action shop-button" data-potion="mythic" data-cost="70">70 gems · 2 left</button>
     </div>
     <div class="shop-row">
       <div class="shop-copy"><strong>Legendary Potion</strong>One luck charge</div>
-      <button class="btn-action shop-button" data-potion="legendary" data-cost="150">150 gems</button>
+      <button class="btn-action shop-button" data-potion="legendary" data-cost="150">150 gems · 1 left</button>
     </div>
     <div class="shop-row">
       <div class="shop-copy"><strong>Divine Potion</strong>Ultimate luck charge</div>
-      <button class="btn-action shop-button" data-potion="divine" data-cost="400">400 gems</button>
+      <button class="btn-action shop-button" data-potion="divine" data-cost="400">400 gems · 1 left</button>
     </div>
     <div class="eternal-market">
       <p class="market-note">One market stock · Permanent crystal blessing</p>
@@ -241,13 +249,40 @@
     </div>
   </div>
 
+  <div class="shop-section">
+    <div class="inv-title">Wheel Foundry</div>
+    <div class="milestone">Milestone <span id="wheel-tier">0</span> · <span id="wheel-name">Broken Wooden Wheel</span></div>
+    <p class="recipe" id="wheel-recipe">Next: Bronze Wheel · 18 Timber, 12 Copper Ore, 8 Coal</p>
+    <button class="btn-action shop-button" id="upgrade-wheel">Build next wheel</button>
+    <div class="inv-title potion-shop">Materials</div>
+    <div class="material-grid">
+      <div class="material-entry">Timber <span class="material-count" id="mat-timber">0</span></div>
+      <div class="material-entry">Copper Ore <span class="material-count" id="mat-copperOre">0</span></div>
+      <div class="material-entry">Coal <span class="material-count" id="mat-coal">0</span></div>
+      <div class="material-entry">Bronze Ingot <span class="material-count" id="mat-bronzeIngot">0</span></div>
+      <div class="material-entry">Silver Ore <span class="material-count" id="mat-silverOre">0</span></div>
+      <div class="material-entry">Silver Ingot <span class="material-count" id="mat-silverIngot">0</span></div>
+      <div class="material-entry">Crystal Shard <span class="material-count" id="mat-crystalShard">0</span></div>
+      <div class="material-entry">Gold Ore <span class="material-count" id="mat-goldOre">0</span></div>
+    </div>
+  </div>
+
+  <div class="shop-section">
+    <div class="inv-title">Auto Sell Loot</div>
+    <div class="auto-row"><span>Small Coins</span><label><input type="checkbox" data-auto-sell="smallCoins"> Sell automatically</label></div>
+    <div class="auto-row"><span>Coin Pouch</span><label><input type="checkbox" data-auto-sell="coinPouch"> Sell automatically</label></div>
+    <div class="auto-row"><span>Rare Chest</span><label><input type="checkbox" data-auto-sell="rareChest"> Sell automatically</label></div>
+    <div class="auto-row"><span>Gem Cluster</span><label><input type="checkbox" data-auto-sell="gemCluster"> Sell automatically</label></div>
+    <div class="auto-row"><span>Divine Royalty</span><label><input type="checkbox" data-auto-sell="divineRoyalty"> Sell automatically</label></div>
+  </div>
+
   <div class="inventory-section">
     <div class="inv-title">Alchemical Potion Inventory</div>
 
     <div class="item-row" id="row-eternal">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">◇</span>
-        <div class="item-name" style="color:#00a9c7;">Eternal Potion</div>
+        <div class="item-name" style="color:#00a9c7;">Eternal Potion<span class="potion-detail">Permanent: crystal wheel, moderate luck</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-eternal">0</div>
@@ -259,7 +294,7 @@
     <div class="item-row" id="row-secret">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">✧</span>
-        <div class="item-name" style="color:#e06ad6;">Secret Potion</div>
+        <div class="item-name" style="color:#e06ad6;">Secret Potion<span class="potion-detail">+300% gem odds · +400% jackpot odds</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-secret">0</div>
@@ -272,7 +307,7 @@
     <div class="item-row" id="row-divine">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">✦</span>
-        <div class="item-name" style="color:var(--color-divine);">Divine Potion</div>
+        <div class="item-name" style="color:var(--color-divine);">Divine Potion<span class="potion-detail">+1,200% jackpot odds</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-divine">0</div>
@@ -285,7 +320,7 @@
     <div class="item-row" id="row-legendary">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">★</span>
-        <div class="item-name" style="color:var(--color-legendary);">Legendary Potion</div>
+        <div class="item-name" style="color:var(--color-legendary);">Legendary Potion<span class="potion-detail">+600% jackpot odds</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-legendary">0</div>
@@ -298,7 +333,7 @@
     <div class="item-row" id="row-mythic">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">◆</span>
-        <div class="item-name" style="color:var(--color-mythic);">Mythic Potion</div>
+        <div class="item-name" style="color:var(--color-mythic);">Mythic Potion<span class="potion-detail">+200% gem odds · +300% jackpot odds</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-mythic">0</div>
@@ -311,7 +346,7 @@
     <div class="item-row" id="row-rare">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">◈</span>
-        <div class="item-name" style="color:var(--color-rare);">Rare Potion</div>
+        <div class="item-name" style="color:var(--color-rare);">Rare Potion<span class="potion-detail">+100% gem odds</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-rare">0</div>
@@ -324,7 +359,7 @@
     <div class="item-row" id="row-uncommon">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">●</span>
-        <div class="item-name" style="color:var(--color-uncommon);">Uncommon Potion</div>
+        <div class="item-name" style="color:var(--color-uncommon);">Uncommon Potion<span class="potion-detail">+200% coin pouch odds</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-uncommon">0</div>
@@ -337,7 +372,7 @@
     <div class="item-row" id="row-basic">
       <div class="item-meta">
         <span class="potion-asset" aria-hidden="true">•</span>
-        <div class="item-name" style="color:var(--color-basic);">Basic Potion</div>
+        <div class="item-name" style="color:var(--color-basic);">Basic Potion<span class="potion-detail">Removes small coin drops</span></div>
       </div>
       <div class="item-controls">
         <div class="item-qty" id="qty-basic">0</div>

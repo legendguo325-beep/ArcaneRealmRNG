@@ -13,8 +13,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const buyPayoutButton = document.getElementById('buy-payout');
   const buyEternalButton = document.getElementById('buy-eternal');
   const potionTiers = ['basic', 'uncommon', 'rare', 'mythic', 'legendary', 'divine', 'secret', 'eternal'];
+  const marketTiers = ['uncommon', 'rare', 'mythic', 'legendary', 'divine'];
+  const dailyMarketDefaults = { uncommon: 3, rare: 2, mythic: 2, legendary: 1, divine: 1 };
   const sellValues = { basic: 2, uncommon: 8, rare: 20, mythic: 50, legendary: 110, divine: 300, secret: 250, eternal: 500 };
   const lootKeys = ['smallCoins', 'coinPouch', 'rareChest', 'gemCluster', 'divineRoyalty'];
+  const materialKeys = ['timber', 'copperOre', 'coal', 'bronzeIngot', 'silverOre', 'silverIngot', 'crystalShard', 'goldOre'];
+  const wheelMilestones = [
+    { name: 'Broken Wooden Wheel', recipe: null },
+    { name: 'Bronze Wheel', recipe: { timber: 18, copperOre: 12, coal: 8 }, label: '18 Timber, 12 Copper Ore, 8 Coal', bonus: 0.08 },
+    { name: 'Silver Wheel', recipe: { bronzeIngot: 24, silverOre: 18, crystalShard: 12 }, label: '24 Bronze Ingots, 18 Silver Ore, 12 Crystal Shards', bonus: 0.16 },
+    { name: 'Gold Wheel', recipe: { silverIngot: 32, goldOre: 24, crystalShard: 18 }, label: '32 Silver Ingots, 24 Gold Ore, 18 Crystal Shards', bonus: 0.26 }
+  ];
+  const autoSellValues = { smallCoins: 1, coinPouch: 5, rareChest: 12, gemCluster: 4, divineRoyalty: 100 };
 
   const defaultState = {
     coins: 50,
@@ -24,19 +34,29 @@ document.addEventListener('DOMContentLoaded', () => {
     luckLevel: 0,
     payoutLevel: 0,
     eternalStock: 1,
+    marketDay: '',
+    marketStock: structuredClone(dailyMarketDefaults),
     eternalBlessing: false,
+    wheelTier: 0,
     inventory: { basic: 1, uncommon: 0, rare: 0, mythic: 0, legendary: 0, divine: 0, secret: 0, eternal: 0 },
     loot: { smallCoins: 0, coinPouch: 0, rareChest: 0, gemCluster: 0, divineRoyalty: 0 },
+    materials: { timber: 0, copperOre: 0, coal: 0, bronzeIngot: 0, silverOre: 0, silverIngot: 0, crystalShard: 0, goldOre: 0 },
+    autoSell: { smallCoins: false, coinPouch: false, rareChest: false, gemCluster: false, divineRoyalty: false },
     activePotion: null
   };
   let runtimeState = structuredClone(defaultState);
 
   const basePrizes = [
-    { name: 'Small Coins', weight: 50, type: 'coins', val: 5, c1: '#fff0a8', c2: '#e9b936' },
-    { name: 'Coin Pouch', weight: 24, type: 'coins', val: 35, c1: '#ffe27a', c2: '#d68b18' },
-    { name: 'Rare Chest', weight: 14, type: 'coins', val: 80, c1: '#bde8ff', c2: '#4a9ed8' },
-    { name: 'Gem Cluster', weight: 14, type: 'gems', val: 3, c1: '#f1c7ff', c2: '#a342d4' },
-    { name: 'DIVINE ROYALTY', weight: 1, type: 'jackpot', val: 0, c1: '#fff8c7', c2: '#e19a00' }
+    { name: 'Small Coins', weight: 50, type: 'coins', val: 5, materials: { timber: 1 }, c1: '#fff0a8', c2: '#e9b936' },
+    { name: 'Coin Pouch', weight: 24, type: 'coins', val: 35, materials: { copperOre: 1, coal: 1 }, c1: '#ffe27a', c2: '#d68b18' },
+    { name: 'Rare Chest', weight: 14, type: 'coins', val: 80, materials: { bronzeIngot: 1, silverOre: 1, silverIngot: 1 }, c1: '#bde8ff', c2: '#4a9ed8' },
+    { name: 'Gem Cluster', weight: 14, type: 'gems', val: 3, materials: { crystalShard: 1 }, c1: '#f1c7ff', c2: '#a342d4' },
+    { name: 'Divine Royalty', weight: 1, type: 'jackpot', val: 0, materials: { goldOre: 2 }, c1: '#fff8c7', c2: '#e19a00' },
+    { name: 'Uncommon Potion', weight: 7, type: 'potion', tier: 'uncommon', c1: '#d8ffd9', c2: '#2ecc71' },
+    { name: 'Rare Potion', weight: 4, type: 'potion', tier: 'rare', c1: '#d7f2ff', c2: '#0088ff' },
+    { name: 'Mythic Potion', weight: 2, type: 'potion', tier: 'mythic', c1: '#f0d9ff', c2: '#a832ff' },
+    { name: 'Legendary Potion', weight: 1, type: 'potion', tier: 'legendary', c1: '#fff3b0', c2: '#e19a00' },
+    { name: 'Divine Potion', weight: 0.5, type: 'potion', tier: 'divine', c1: '#dfffff', c2: '#00a9c7' }
   ];
 
   let currentWheelAngle = 0;
@@ -49,11 +69,16 @@ document.addEventListener('DOMContentLoaded', () => {
         ...defaultState,
         ...savedState,
         inventory: { ...defaultState.inventory, ...(savedState.inventory || {}) },
-        loot: { ...defaultState.loot, ...(savedState.loot || {}) }
+        loot: { ...defaultState.loot, ...(savedState.loot || {}) },
+        marketStock: { ...defaultState.marketStock, ...(savedState.marketStock || {}) },
+        materials: { ...defaultState.materials, ...(savedState.materials || {}) },
+        autoSell: { ...defaultState.autoSell, ...(savedState.autoSell || {}) }
       };
     }
+    restockMarketIfNeeded();
     refreshDisplayHUD();
     paintWheelMatrix();
+    updateCooldownDisplay();
   });
 
   function saveStateToLocalDisk() {
@@ -64,12 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
     coinLabel.textContent = runtimeState.coins;
     gemLabel.textContent = runtimeState.gems;
     rollsLabel.textContent = `${runtimeState.rolls} / 10`;
-    cycleStatus.textContent = runtimeState.cycle % 2 === 1 ? `Lucky odds · Cycle ${runtimeState.cycle}` : `Risky odds · Cycle ${runtimeState.cycle}`;
+    cycleStatus.textContent = runtimeState.cooldownUntil > Date.now() ? `Cooldown · ${Math.ceil((runtimeState.cooldownUntil - Date.now()) / 1000)}s` : (runtimeState.cycle % 2 === 1 ? `Lucky odds · Cycle ${runtimeState.cycle}` : `Risky odds · Cycle ${runtimeState.cycle}`);
     luckLevelLabel.textContent = runtimeState.luckLevel;
     payoutLevelLabel.textContent = runtimeState.payoutLevel;
-    buyLuckButton.textContent = `Buy ${25 + runtimeState.luckLevel * 25} coins`;
-    buyPayoutButton.textContent = `Buy ${40 + runtimeState.payoutLevel * 35} coins`;
-    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out';
+    buyLuckButton.textContent = `Buy ${75 + runtimeState.luckLevel * 75} coins`;
+    buyPayoutButton.textContent = `Buy ${100 + runtimeState.payoutLevel * 100} coins`;
+    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out today';
     buyEternalButton.disabled = runtimeState.eternalStock <= 0;
     potionTiers.forEach(tier => {
       document.getElementById(`qty-${tier}`).textContent = runtimeState.inventory[tier] || 0;
@@ -79,9 +104,50 @@ document.addEventListener('DOMContentLoaded', () => {
       button.textContent = tier === 'eternal' && runtimeState.eternalBlessing ? 'Blessed' : (runtimeState.activePotion === tier ? 'Active' : 'Arm');
       button.disabled = tier === 'eternal' && runtimeState.eternalBlessing;
     });
-    lootKeys.forEach(key => {
-      document.getElementById(`loot-${key}-label`).textContent = `${key.replace(/([A-Z])/g, ' $1')} × ${runtimeState.loot[key] || 0}`;
+    marketTiers.forEach(tier => {
+      const button = document.querySelector(`[data-potion="${tier}"]`);
+      const stock = runtimeState.marketStock[tier] || 0;
+      button.textContent = stock > 0 ? `${button.dataset.cost} gems · ${stock} left` : 'Sold out today';
+      button.disabled = stock <= 0;
     });
+    lootKeys.forEach(key => {
+      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, character => character.toUpperCase());
+      document.getElementById(`loot-${key}-label`).textContent = `${label} × ${runtimeState.loot[key] || 0}`;
+    });
+    const currentWheel = wheelMilestones[runtimeState.wheelTier] || wheelMilestones[0];
+    document.getElementById('wheel-tier').textContent = runtimeState.wheelTier;
+    document.getElementById('wheel-name').textContent = currentWheel.name;
+    const nextWheel = wheelMilestones[runtimeState.wheelTier + 1];
+    const upgradeWheelButton = document.getElementById('upgrade-wheel');
+    upgradeWheelButton.disabled = !nextWheel;
+    upgradeWheelButton.textContent = nextWheel ? `Build ${nextWheel.name}` : 'Gold Wheel complete';
+    document.getElementById('wheel-recipe').textContent = nextWheel ? `Next: ${nextWheel.name} · ${nextWheel.label}` : 'Final milestone reached.';
+    materialKeys.forEach(key => {
+      document.getElementById(`mat-${key}`).textContent = runtimeState.materials[key] || 0;
+    });
+    document.querySelectorAll('[data-auto-sell]').forEach(input => {
+      input.checked = Boolean(runtimeState.autoSell[input.dataset.autoSell]);
+    });
+  }
+
+  function restockMarketIfNeeded() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (runtimeState.marketDay === today) return;
+    runtimeState.marketDay = today;
+    runtimeState.marketStock = structuredClone(dailyMarketDefaults);
+    runtimeState.eternalStock = 1;
+    saveStateToLocalDisk();
+  }
+
+  function updateCooldownDisplay() {
+    const remaining = (runtimeState.cooldownUntil || 0) - Date.now();
+    spinBtn.disabled = isMotionActive || remaining > 0;
+    if (remaining > 0) {
+      cycleStatus.textContent = `Cooldown · ${Math.ceil(remaining / 1000)}s`;
+      tickerTray.textContent = 'The wheel is resting after ten rolls.';
+    } else if (!isMotionActive) {
+      refreshDisplayHUD();
+    }
   }
 
   function paintWheelMatrix() {
@@ -89,6 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const radius = canvas.width / 2;
     const sectorRadians = (2 * Math.PI) / basePrizes.length;
+    const wheelPalettes = [
+      ['#d2a66f', '#81502d'],
+      ['#e8a85c', '#8b451f'],
+      ['#e7f6ff', '#7b9caf'],
+      ['#fff0a8', '#d18a00']
+    ];
 
     ctx.save();
     ctx.translate(radius, radius);
@@ -97,13 +169,14 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let i = 0; i < basePrizes.length; i++) {
       const item = basePrizes[i];
       const eternalColors = ['#dffcff', '#78dce8', '#f8ffff', '#75bfd8'];
+      const tierColors = wheelPalettes[runtimeState.wheelTier] || wheelPalettes[0];
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.arc(0, 0, radius - 2, i * sectorRadians, (i + 1) * sectorRadians);
       
       let radialGlowGradient = ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
-      radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : item.c1);
-      radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : item.c2);
+      radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : (runtimeState.wheelTier ? tierColors[0] : item.c1));
+      radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : (runtimeState.wheelTier ? tierColors[1] : item.c2));
       ctx.fillStyle = radialGlowGradient;
       ctx.fill();
 
@@ -140,6 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (slice.type === 'gems') calcWeight *= luckyCycle ? 1.5 : 0.85;
       if (slice.type === 'coins' && slice.val >= 35) calcWeight *= 1 + runtimeState.luckLevel * 0.12;
       if (slice.type === 'coins' && slice.val === 5 && !luckyCycle) calcWeight *= 1.35;
+      if (slice.type === 'potion') calcWeight *= 1 + runtimeState.luckLevel * 0.1;
+      const wheelBonus = wheelMilestones[runtimeState.wheelTier]?.bonus || 0;
+      if (slice.type === 'gems' || slice.type === 'potion') calcWeight *= 1 + wheelBonus;
       if (runtimeState.eternalBlessing) {
         if (slice.type === 'jackpot') calcWeight *= 2;
         if (slice.type === 'gems') calcWeight *= 1.8;
@@ -148,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (runtimeState.activePotion === 'basic' && slice.name === 'Small Coins') calcWeight = 0;
       else if (runtimeState.activePotion === 'uncommon') {
-        if (slice.name === 'Uncommon Bronze') calcWeight *= 3;
+        if (slice.name === 'Coin Pouch') calcWeight *= 3;
       }
       else if (runtimeState.activePotion === 'rare') {
         if (slice.type === 'gems') calcWeight *= 2;
@@ -170,7 +246,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function beginMotionSequence() {
-    if (isMotionActive) return;
+    if (isMotionActive || (runtimeState.cooldownUntil || 0) > Date.now()) {
+      updateCooldownDisplay();
+      return;
+    }
     isMotionActive = true;
     spinBtn.disabled = true;
     tickerTray.textContent = "Rolling your fate...";
@@ -207,16 +286,22 @@ document.addEventListener('DOMContentLoaded', () => {
     spinBtn.disabled = false;
     
     if (landedSlice.type === 'coins') {
-      const payout = landedSlice.val * (1 + runtimeState.payoutLevel * 0.25);
+      const payout = Math.round(landedSlice.val * (1 + runtimeState.payoutLevel * 0.25));
       runtimeState.coins += payout;
       runtimeState.loot[landedSlice.name === 'Small Coins' ? 'smallCoins' : landedSlice.name === 'Coin Pouch' ? 'coinPouch' : 'rareChest']++;
+      addMaterials(landedSlice.materials);
+      autoSellLoot(landedSlice.name === 'Small Coins' ? 'smallCoins' : landedSlice.name === 'Coin Pouch' ? 'coinPouch' : 'rareChest');
       tickerTray.textContent = `Claimed: +${payout} Coins!`;
     } else if (landedSlice.type === 'gems') {
       runtimeState.gems += landedSlice.val;
       runtimeState.loot.gemCluster++;
+      addMaterials(landedSlice.materials);
+      autoSellLoot('gemCluster');
       tickerTray.textContent = `Claimed: +${landedSlice.val} Gems!`;
     } else if (landedSlice.type === 'jackpot') {
       runtimeState.loot.divineRoyalty++;
+      addMaterials(landedSlice.materials);
+      autoSellLoot('divineRoyalty');
       const roll = Math.random() * 100;
       if (roll < 1) { runtimeState.inventory.eternal++; tickerTray.textContent = 'ETERNAL DROP! A crystal potion has appeared!'; }
       else if (roll < 5) { runtimeState.inventory.secret++; tickerTray.textContent = 'SECRET DROP! A Secret Potion has appeared!'; }
@@ -225,6 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (roll < 90) { runtimeState.inventory.mythic++; tickerTray.textContent = 'JACKPOT! Mythic Potion unlocked!'; }
       else if (roll < 98) { runtimeState.inventory.legendary++; tickerTray.textContent = 'JACKPOT! Legendary Potion unlocked!'; }
       else { runtimeState.inventory.divine++; tickerTray.textContent = 'UNREAL LAND! Divine Potion unlocked!'; }
+    } else if (landedSlice.type === 'potion') {
+      runtimeState.inventory[landedSlice.tier]++;
+      tickerTray.textContent = `${landedSlice.name} won!`;
     }
 
     if (runtimeState.activePotion) {
@@ -235,8 +323,40 @@ document.addEventListener('DOMContentLoaded', () => {
     if (runtimeState.rolls >= 10) {
       runtimeState.rolls = 0;
       runtimeState.cycle++;
+      runtimeState.cooldownUntil = Date.now() + 60000;
       tickerTray.textContent += runtimeState.cycle % 2 === 1 ? ' New lucky cycle!' : ' New risky cycle!';
+      updateCooldownDisplay();
     }
+    refreshDisplayHUD();
+    saveStateToLocalDisk();
+  }
+
+  function addMaterials(materials) {
+    Object.entries(materials || {}).forEach(([key, amount]) => {
+      runtimeState.materials[key] += amount;
+    });
+  }
+
+  function autoSellLoot(key) {
+    if (!runtimeState.autoSell[key]) return;
+    runtimeState.loot[key]--;
+    runtimeState.gems += autoSellValues[key];
+  }
+
+  function upgradeWheel() {
+    if (isMotionActive) return;
+    const nextWheel = wheelMilestones[runtimeState.wheelTier + 1];
+    if (!nextWheel) return;
+    const missing = Object.entries(nextWheel.recipe).find(([key, amount]) => runtimeState.materials[key] < amount);
+    if (missing) {
+      tickerTray.textContent = `Need ${missing[1] - runtimeState.materials[missing[0]]} more ${missing[0]}.`;
+      return;
+    }
+    Object.entries(nextWheel.recipe).forEach(([key, amount]) => {
+      runtimeState.materials[key] -= amount;
+    });
+    runtimeState.wheelTier++;
+    tickerTray.textContent = `${nextWheel.name} built! Milestone ${runtimeState.wheelTier} reached.`;
     refreshDisplayHUD();
     saveStateToLocalDisk();
   }
@@ -271,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function buyUpgrade(type) {
     if (isMotionActive) return;
     const levelKey = type === 'luck' ? 'luckLevel' : 'payoutLevel';
-    const cost = type === 'luck' ? 25 + runtimeState.luckLevel * 25 : 40 + runtimeState.payoutLevel * 35;
+    const cost = type === 'luck' ? 75 + runtimeState.luckLevel * 75 : 100 + runtimeState.payoutLevel * 100;
     if (runtimeState.coins < cost) {
       tickerTray.textContent = `You need ${cost - runtimeState.coins} more coins.`;
       return;
@@ -285,18 +405,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function buyPotion(tier, cost) {
     if (isMotionActive) return;
+    restockMarketIfNeeded();
+    if (marketTiers.includes(tier) && (runtimeState.marketStock[tier] || 0) <= 0) {
+      tickerTray.textContent = `${tier} Potion is sold out until tomorrow.`;
+      return;
+    }
     if (runtimeState.gems < cost) {
       tickerTray.textContent = `You need ${cost - runtimeState.gems} more gems.`;
       return;
     }
     runtimeState.gems -= cost;
     runtimeState.inventory[tier]++;
+    if (marketTiers.includes(tier)) runtimeState.marketStock[tier]--;
     tickerTray.textContent = `${tier} Potion added to your inventory!`;
     refreshDisplayHUD();
     saveStateToLocalDisk();
   }
 
   function buyEternalPotion() {
+    restockMarketIfNeeded();
     if (isMotionActive || runtimeState.eternalStock <= 0) return;
     if (runtimeState.gems < 1000) {
       tickerTray.textContent = `You need ${1000 - runtimeState.gems} more gems.`;
@@ -354,6 +481,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-sell-item]').forEach(button => {
     button.addEventListener('click', () => sellLoot(button.dataset.sellItem, Number(button.dataset.sellValue)));
   });
+  document.getElementById('upgrade-wheel').addEventListener('click', upgradeWheel);
+  document.querySelectorAll('[data-auto-sell]').forEach(input => {
+    input.addEventListener('change', () => {
+      runtimeState.autoSell[input.dataset.autoSell] = input.checked;
+      saveStateToLocalDisk();
+    });
+  });
+  setInterval(updateCooldownDisplay, 250);
 });
 
 
