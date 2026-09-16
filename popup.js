@@ -75,19 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentWheelAngle = 0;
   let isMotionActive = false;
 
-  function getWheelLabel(prize) {
-    const reward = prize.type === 'coins' ? `${prize.val} Coins` : prize.name;
-    const materials = Object.keys(prize.materials || {})
-      .map(key => materialNames[key])
-      .filter(materialName => materialName !== prize.name);
-    return materials.length ? `${reward} + ${materials.join(' + ')}` : reward;
-  }
-
   function refreshWheelPrizes() {
     const permanentPrizes = basePrizes.filter(prize => prize.type !== 'potion');
     const potionPrizes = basePrizes.filter(prize => prize.type === 'potion');
-    const selectedPrizes = [...permanentPrizes];
+    let selectedPrizes = [...permanentPrizes];
     if (Math.random() < 0.35) {
+      const omittedIndex = Math.floor(Math.random() * selectedPrizes.length);
+      selectedPrizes = selectedPrizes.filter((prize, index) => index !== omittedIndex);
       selectedPrizes.push(potionPrizes[Math.floor(Math.random() * potionPrizes.length)]);
     }
 
@@ -196,12 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const radius = canvas.width / 2;
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
-    const wheelPalettes = [
-      ['#d2a66f', '#81502d'],
-      ['#e8a85c', '#8b451f'],
-      ['#e7f6ff', '#7b9caf'],
-      ['#fff0a8', '#d18a00']
+    const wheelStyles = [
+      { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)' },
+      { inner: '#e8a85c', outer: '#8b451f', rim: '#a85f2a', center: '#ffd08a', shadow: 'rgba(139, 69, 31, 0.4)' },
+      { inner: '#e7f6ff', outer: '#7b9caf', rim: '#a9c7d8', center: '#f5fbff', shadow: 'rgba(91, 126, 148, 0.4)' },
+      { inner: '#fff0a8', outer: '#d18a00', rim: '#f0b928', center: '#fff8cf', shadow: 'rgba(197, 135, 0, 0.4)' }
     ];
+    const tierStyle = wheelStyles[runtimeState.wheelTier] || wheelStyles[0];
+    canvas.style.borderColor = runtimeState.eternalBlessing ? '#00b9d4' : tierStyle.rim;
+    canvas.style.boxShadow = `0 8px 24px ${runtimeState.eternalBlessing ? 'rgba(0, 185, 212, 0.35)' : tierStyle.shadow}`;
 
     ctx.save();
     ctx.translate(radius, radius);
@@ -210,14 +207,13 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let i = 0; i < wheelPrizes.length; i++) {
       const item = wheelPrizes[i];
       const eternalColors = ['#dffcff', '#78dce8', '#f8ffff', '#75bfd8'];
-      const tierColors = wheelPalettes[runtimeState.wheelTier] || wheelPalettes[0];
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.arc(0, 0, radius - 2, i * sectorRadians, (i + 1) * sectorRadians);
       
       let radialGlowGradient = ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
-      radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : (runtimeState.wheelTier ? tierColors[0] : item.c1));
-      radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : (runtimeState.wheelTier ? tierColors[1] : item.c2));
+      radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : tierStyle.inner);
+      radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : tierStyle.outer);
       ctx.fillStyle = radialGlowGradient;
       ctx.fill();
 
@@ -225,27 +221,15 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
       ctx.stroke();
 
-      ctx.save();
-      ctx.fillStyle = runtimeState.eternalBlessing ? '#075d79' : '#ffffff';
-      ctx.font = 'bold 8px sans-serif';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.rotate(i * sectorRadians + sectorRadians / 2);
-      const wheelLabel = runtimeState.eternalBlessing ? `◇ ${getWheelLabel(item)}` : getWheelLabel(item);
-      const labelParts = wheelLabel.split(' + ');
-      labelParts.forEach((part, partIndex) => {
-        ctx.fillText(part, radius - 12, (partIndex - (labelParts.length - 1) / 2) * 9);
-      });
-      ctx.restore();
     }
     ctx.restore();
 
     ctx.beginPath();
     ctx.arc(radius, radius, 8, 0, 2 * Math.PI);
-    ctx.fillStyle = runtimeState.eternalBlessing ? '#eaffff' : '#fff7d6';
+    ctx.fillStyle = runtimeState.eternalBlessing ? '#eaffff' : tierStyle.center;
     ctx.fill();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = runtimeState.eternalBlessing ? '#00b9d4' : '#c47a00';
+    ctx.strokeStyle = runtimeState.eternalBlessing ? '#00b9d4' : tierStyle.rim;
     ctx.stroke();
   }
 
@@ -426,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
     runtimeState.wheelTier++;
     tickerTray.textContent = `${nextWheel.name} built! Milestone ${runtimeState.wheelTier} reached.`;
     refreshDisplayHUD();
+    paintWheelMatrix();
     saveStateToLocalDisk();
   }
 
