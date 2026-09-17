@@ -68,6 +68,14 @@
       border-radius: 50%;
       box-shadow: 0 8px 24px rgba(197, 135, 0, 0.28);
     }
+    canvas#wheel.rare-refresh {
+      animation: wheel-flash 900ms ease-out;
+    }
+    @keyframes wheel-flash {
+      0% { filter: brightness(1); }
+      35% { filter: brightness(1.8) saturate(1.35); }
+      100% { filter: brightness(1); }
+    }
     .wheel-ticker {
       position: absolute;
       top: -6px;
@@ -203,10 +211,10 @@
     <canvas id="wheel" width="200" height="200"></canvas>
   </div>
 
-  <button id="spin-btn">Invoke Fate Roll</button>
+  <button id="spin-btn">Spin the Wheel</button>
 
   <div class="cycle-panel">
-    <span class="cycle-label">Fate cycle</span>
+    <span class="cycle-label">Wheel cycle</span>
     <span id="cycle-status">Lucky odds</span>
   </div>
 
@@ -394,7 +402,7 @@
     <div class="shop-row"><div class="shop-copy"><strong id="loot-divineRoyalty-label">Divine Royalty × 0</strong><span class="sell-value">Sell for 100 gems</span></div><button class="btn-action shop-button" data-sell-item="divineRoyalty" data-sell-value="100">Sell</button></div>
   </div>
 
-  <div id="ticker-tray">Fate awaits your arrival.</div>
+  <div id="ticker-tray">Spin the wheel to begin.</div>
 
   <script src="popup.js"></script>
 </body>

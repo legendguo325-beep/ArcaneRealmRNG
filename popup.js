@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     marketDay: '',
     marketStock: structuredClone(dailyMarketDefaults),
     eternalBlessing: false,
+    refreshWheelType: 'normal',
+    crystalRefreshUsed: false,
     wheelTier: 0,
     inventory: { basic: 1, uncommon: 0, rare: 0, mythic: 0, legendary: 0, divine: 0, secret: 0, eternal: 0 },
     loot: { smallCoins: 0, coinPouch: 0, rareChest: 0, materialChest: 0, gemCluster: 0, divineRoyalty: 0 },
@@ -80,6 +82,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let isMotionActive = false;
 
   function refreshWheelPrizes() {
+    const refreshRoll = Math.random();
+    if (!runtimeState.crystalRefreshUsed && refreshRoll < 0.0005) {
+      runtimeState.refreshWheelType = 'crystal';
+      runtimeState.crystalRefreshUsed = true;
+    } else {
+      runtimeState.refreshWheelType = refreshRoll < 0.0025 ? 'gold' : refreshRoll < 0.01 ? 'silver' : 'normal';
+    }
+    const refreshTier = { normal: 0, silver: 2, gold: 3, crystal: 4 }[runtimeState.refreshWheelType] || 0;
+    if (refreshTier <= runtimeState.wheelTier) {
+      runtimeState.refreshWheelType = 'normal';
+    }
     const permanentPrizes = basePrizes.filter(prize => prize.type !== 'potion');
     const potionPrizes = basePrizes.filter(prize => prize.type === 'potion');
     let selectedPrizes = [...permanentPrizes];
@@ -151,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     coinLabel.textContent = runtimeState.coins;
     gemLabel.textContent = runtimeState.gems;
     rollsLabel.textContent = `${runtimeState.rolls} / 10`;
-    cycleStatus.textContent = runtimeState.cooldownUntil > Date.now() ? `Cooldown · ${Math.ceil((runtimeState.cooldownUntil - Date.now()) / 1000)}s` : (runtimeState.cycle % 2 === 1 ? `Lucky odds · Cycle ${runtimeState.cycle}` : `Risky odds · Cycle ${runtimeState.cycle}`);
+    cycleStatus.textContent = runtimeState.cooldownUntil > Date.now() ? `Wheel cooldown · ${Math.ceil((runtimeState.cooldownUntil - Date.now()) / 1000)}s` : (runtimeState.cycle % 2 === 1 ? `Lucky wheel · Cycle ${runtimeState.cycle}` : `Risky wheel · Cycle ${runtimeState.cycle}`);
     luckLevelLabel.textContent = runtimeState.luckLevel;
     payoutLevelLabel.textContent = runtimeState.payoutLevel;
     buyLuckButton.textContent = `Buy ${100 + runtimeState.luckLevel * 150} coins`;
@@ -207,8 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const remaining = (runtimeState.cooldownUntil || 0) - Date.now();
     spinBtn.disabled = isMotionActive || remaining > 0;
     if (remaining > 0) {
-      cycleStatus.textContent = `Cooldown · ${Math.ceil(remaining / 1000)}s`;
-      tickerTray.textContent = 'The wheel is resting after ten rolls.';
+      cycleStatus.textContent = `Wheel cooldown · ${Math.ceil(remaining / 1000)}s`;
+      tickerTray.textContent = 'The wheel is cooling down after ten spins.';
     } else if (!isMotionActive) {
       refreshDisplayHUD();
     }
@@ -226,7 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
       { inner: '#e7f6ff', outer: '#7b9caf', rim: '#a9c7d8', center: '#f5fbff', shadow: 'rgba(91, 126, 148, 0.4)' },
       { inner: '#fff0a8', outer: '#d18a00', rim: '#f0b928', center: '#fff8cf', shadow: 'rgba(197, 135, 0, 0.4)' }
     ];
-    const tierStyle = wheelStyles[runtimeState.wheelTier] || wheelStyles[0];
+    const specialStyles = {
+      silver: { inner: '#f7fdff', outer: '#7b9caf', rim: '#d9f2ff', center: '#ffffff', shadow: 'rgba(91, 126, 148, 0.55)' },
+      gold: { inner: '#fff8b0', outer: '#d18a00', rim: '#ffe36e', center: '#fffdf0', shadow: 'rgba(197, 135, 0, 0.6)' },
+      crystal: { inner: '#f4ffff', outer: '#43d7e7', rim: '#ffffff', center: '#ffffff', shadow: 'rgba(0, 185, 212, 0.7)' },
+      degraded: { inner: '#c8b9ac', outer: '#62554c', rim: '#8f7b6d', center: '#d8c9bc', shadow: 'rgba(81, 68, 58, 0.45)' }
+    };
+    const tierStyle = specialStyles[runtimeState.refreshWheelType] || wheelStyles[runtimeState.wheelTier] || wheelStyles[0];
+    canvas.classList.toggle('rare-refresh', runtimeState.refreshWheelType !== 'normal');
     canvas.style.borderColor = runtimeState.eternalBlessing ? '#00b9d4' : tierStyle.rim;
     canvas.style.boxShadow = `0 8px 24px ${runtimeState.eternalBlessing ? 'rgba(0, 185, 212, 0.35)' : tierStyle.shadow}`;
 
@@ -252,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.stroke();
 
       ctx.save();
-      ctx.fillStyle = runtimeState.eternalBlessing ? '#075d79' : '#ffffff';
+      ctx.fillStyle = runtimeState.eternalBlessing || runtimeState.refreshWheelType === 'crystal' ? '#075d79' : '#ffffff';
       ctx.font = 'bold 7px Trebuchet MS, sans-serif';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
@@ -283,7 +303,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (slice.type === 'coins' && slice.val === 4 && !luckyCycle) calcWeight *= 1.35;
       if (slice.type === 'potion') calcWeight *= 1 + runtimeState.luckLevel * 0.1;
       const wheelBonus = wheelMilestones[runtimeState.wheelTier]?.bonus || 0;
-      if (slice.type === 'gems' || slice.type === 'potion') calcWeight *= 1 + wheelBonus;
+      const temporaryBonus = runtimeState.refreshWheelType === 'crystal' ? 0.35
+        : runtimeState.refreshWheelType === 'gold' ? 0.20
+          : runtimeState.refreshWheelType === 'silver' ? 0.10 : 0;
+      const effectiveWheelBonus = runtimeState.refreshWheelType === 'degraded'
+        ? Math.max(0, wheelBonus - 0.15)
+        : Math.max(wheelBonus, temporaryBonus);
+      if (slice.type === 'gems' || slice.type === 'potion') calcWeight *= 1 + effectiveWheelBonus;
+      if (slice.type === 'gems' || slice.type === 'potion' || slice.type === 'jackpot') {
+        calcWeight *= Math.max(0.1, 1 + (runtimeState.refreshLuck || 0));
+      }
       if (runtimeState.eternalBlessing) {
         if (slice.type === 'jackpot') calcWeight *= 2;
         if (slice.type === 'gems') calcWeight *= 1.8;
@@ -320,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     isMotionActive = true;
     spinBtn.disabled = true;
-    tickerTray.textContent = "Rolling your fate...";
+    tickerTray.textContent = 'Spinning the wheel...';
 
     const winIdx = processStateProbabilityIndex();
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
@@ -401,8 +430,19 @@ document.addEventListener('DOMContentLoaded', () => {
     runtimeState.rolls++;
     if (runtimeState.rolls % 5 === 0) {
       refreshWheelPrizes();
+      runtimeState.refreshLuck = runtimeState.refreshWheelType === 'crystal' ? 0.35
+        : runtimeState.refreshWheelType === 'gold' ? 0.20
+          : runtimeState.refreshWheelType === 'silver' ? 0.10 : 0;
       paintWheelMatrix();
-      tickerTray.textContent += ' The wheel has refreshed.';
+      const refreshName = runtimeState.refreshWheelType === 'crystal' ? 'Crystal Wheel' : runtimeState.refreshWheelType === 'gold' ? 'Gold Wheel' : runtimeState.refreshWheelType === 'silver' ? 'Silver Wheel' : 'new wheel layout';
+      if (Math.random() < 0.15 && runtimeState.wheelTier > 0) {
+        runtimeState.refreshWheelType = 'degraded';
+        runtimeState.refreshLuck = -0.15;
+        tickerTray.textContent = `The wheel changed to a ${refreshName}, but its material degraded one tier.`;
+        paintWheelMatrix();
+      } else {
+        tickerTray.textContent = `The wheel changed to a ${refreshName}!`;
+      }
     }
     if (runtimeState.rolls >= 10) {
       runtimeState.rolls = 0;
