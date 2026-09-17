@@ -114,6 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
       wheelPrizes.push(prize);
       if (shuffledSpecialPrizes[index]) wheelPrizes.push(shuffledSpecialPrizes[index]);
     });
+    while (wheelPrizes.length < 10) {
+      wheelPrizes.push({ name: 'Empty', weight: 8, type: 'empty', c1: '#9b8f85', c2: '#514943' });
+    }
+    wheelPrizes = wheelPrizes.slice(0, 10);
   }
 
   refreshWheelPrizes();
@@ -246,6 +250,15 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.lineWidth = 1;
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
       ctx.stroke();
+
+      ctx.save();
+      ctx.fillStyle = runtimeState.eternalBlessing ? '#075d79' : '#ffffff';
+      ctx.font = 'bold 7px Trebuchet MS, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.rotate(i * sectorRadians + sectorRadians / 2);
+      ctx.fillText(item.name, radius - 10, 0);
+      ctx.restore();
 
     }
     ctx.restore();
