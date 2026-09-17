@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('wheel');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
   const spinBtn = document.getElementById('spin-btn');
   const tickerTray = document.getElementById('ticker-tray');
   const coinLabel = document.getElementById('coins-val');
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const basePrizes = [
     { name: 'Small Coins', lootKey: 'smallCoins', weight: 50, type: 'coins', val: 4, materials: { timber: 1 }, c1: '#fff0a8', c2: '#e9b936' },
-    { name: 'Coin Reward', weight: 24, type: 'coins', val: 30, materials: { copperOre: 1, coal: 1 }, c1: '#ffe27a', c2: '#d68b18' },
+    { name: 'Coin Reward', weight: 24, type: 'coins', val: 20, materials: { copperOre: 1, coal: 1 }, c1: '#ffe27a', c2: '#d68b18' },
     { name: 'Bronze Ingot', weight: 7, type: 'material', materials: { bronzeIngot: 1 }, c1: '#e9b07b', c2: '#8a4d25' },
     { name: 'Silver Ingot', weight: 5, type: 'material', materials: { silverIngot: 1 }, c1: '#e8f2ff', c2: '#7894ad' },
     { name: 'Material Chest', lootKey: 'materialChest', weight: 5, type: 'materialChest', c1: '#d8c2a4', c2: '#8b5e34' },
@@ -113,9 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (shuffledSpecialPrizes[index]) wheelPrizes.push(shuffledSpecialPrizes[index]);
     });
   }
-
-  refreshWheelPrizes();
-  paintWheelMatrix();
 
   chrome.storage.local.get(['arcaneMasterStateV2'], (store) => {
     if (store.arcaneMasterStateV2) {
@@ -262,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const luckyCycle = runtimeState.cycle % 2 === 1;
       if (slice.type === 'jackpot') calcWeight *= luckyCycle ? 1.5 : 0.6;
       if (slice.type === 'gems') calcWeight *= luckyCycle ? 1.5 : 0.85;
-      if (slice.type === 'coins' && slice.val >= 30) calcWeight *= 1 + runtimeState.luckLevel * 0.12;
+      if (slice.type === 'coins' && slice.val >= 20) calcWeight *= 1 + runtimeState.luckLevel * 0.12;
       if (slice.type === 'coins' && slice.val === 4 && !luckyCycle) calcWeight *= 1.35;
       if (slice.type === 'potion') calcWeight *= 1 + runtimeState.luckLevel * 0.1;
       const wheelBonus = wheelMilestones[runtimeState.wheelTier]?.bonus || 0;
@@ -270,12 +269,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (runtimeState.eternalBlessing) {
         if (slice.type === 'jackpot') calcWeight *= 2;
         if (slice.type === 'gems') calcWeight *= 1.8;
-        if (slice.type === 'coins' && slice.val >= 30) calcWeight *= 1.15;
+        if (slice.type === 'coins' && slice.val >= 20) calcWeight *= 1.15;
       }
 
       if (runtimeState.activePotion === 'basic' && slice.type === 'coins' && slice.val === 4) calcWeight = 0;
       else if (runtimeState.activePotion === 'uncommon') {
-        if (slice.type === 'coins' && slice.val === 30) calcWeight *= 3;
+        if (slice.type === 'coins' && slice.val === 20) calcWeight *= 3;
       }
       else if (runtimeState.activePotion === 'rare') {
         if (slice.type === 'gems') calcWeight *= 2;
