@@ -186,6 +186,10 @@
     .eternal-market { border-top: 1px solid #edc85e; margin-top: 8px; padding-top: 8px; }
     .market-note { color: #9b7c48; font-size: 9px; margin: 0 0 5px; }
     .sell-value { color: #a342d4; font-size: 9px; }
+    .tab-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .tab-button { padding: 8px; border: 1px solid #d9b45c; border-radius: 6px; background: #fff9e7; color: #604818; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+    .tab-button.active { background: #ffd85a; border-color: #c98b00; }
+    .tab-panel[hidden] { display: none; }
 
     #ticker-tray {
       margin-top: 10px;
@@ -199,6 +203,13 @@
 </head>
 <body>
   <h3>Arcane Realm RNG</h3>
+
+  <div class="tab-bar" role="tablist" aria-label="Extension sections">
+    <button class="tab-button active" id="tab-main" role="tab" aria-selected="true" aria-controls="main-panel">Main</button>
+    <button class="tab-button" id="tab-inventory" role="tab" aria-selected="false" aria-controls="inventory-panel">Inventory</button>
+  </div>
+
+  <div id="main-panel" class="tab-panel" role="tabpanel">
   
   <div class="dashboard">
     <div class="stat-card"><div class="stat-lbl">Coins</div><div class="stat-val" id="coins-val">50</div></div>
@@ -282,7 +293,9 @@
     <div class="auto-row"><span>Divine Royalty</span><label><input type="checkbox" data-auto-sell="divineRoyalty"> Sell automatically</label></div>
   </div>
 
-  <div class="inventory-section">
+  </div>
+
+  <div id="inventory-panel" class="tab-panel inventory-section" role="tabpanel" hidden>
     <div class="inv-title">Alchemical Potion Inventory</div>
 
     <div class="item-row" id="row-eternal">

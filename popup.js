@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const buyLuckButton = document.getElementById('buy-luck');
   const buyPayoutButton = document.getElementById('buy-payout');
   const buyEternalButton = document.getElementById('buy-eternal');
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabPanels = document.querySelectorAll('.tab-panel');
   const potionTiers = ['basic', 'uncommon', 'rare', 'mythic', 'legendary', 'divine', 'secret', 'eternal'];
   const marketTiers = ['uncommon', 'rare', 'mythic', 'legendary', 'divine'];
   const dailyMarketDefaults = { uncommon: 3, rare: 2, mythic: 2, legendary: 1, divine: 1 };
@@ -80,6 +82,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let wheelPrizes = [];
   let currentWheelAngle = 0;
   let isMotionActive = false;
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const selectedPanel = document.getElementById(button.getAttribute('aria-controls'));
+      tabButtons.forEach(tab => {
+        const active = tab === button;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      tabPanels.forEach(panel => {
+        panel.hidden = panel !== selectedPanel;
+      });
+    });
+  });
 
   function refreshWheelPrizes() {
     const refreshRoll = Math.random();
