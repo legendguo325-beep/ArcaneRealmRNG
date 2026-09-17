@@ -135,6 +135,7 @@
     .item-name { font-size: 11px; font-weight: bold; }
     .potion-detail { display: block; font-size: 8px; font-weight: normal; color: #9b7c48; margin-top: 2px; }
     .item-controls { display: flex; align-items: center; gap: 8px; }
+    .sell-qty { width: 28px; padding: 4px 2px; font-size: 9px; text-align: center; border: 1px solid #d9b45c; border-radius: 4px; }
     .item-qty { font-size: 11px; font-family: monospace; font-weight: bold; color: #fff; width: 14px; text-align: center; }
     
     .btn-action {
@@ -284,6 +285,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-eternal">0</div>
         <button class="btn-action" id="btn-eternal">Use</button>
+        <input class="sell-qty" id="sell-qty-eternal" type="number" min="1" placeholder="1" aria-label="Eternal potions to sell">
         <button class="btn-action" id="sell-eternal">Sell</button>
       </div>
     </div>
@@ -296,6 +298,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-secret">0</div>
         <button class="btn-action" id="btn-secret">Arm</button>
+        <input class="sell-qty" id="sell-qty-secret" type="number" min="1" placeholder="1" aria-label="Secret potions to sell">
         <button class="btn-action" id="sell-secret">Sell</button>
       </div>
     </div>
@@ -309,6 +312,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-divine">0</div>
         <button class="btn-action" id="btn-divine">Arm</button>
+        <input class="sell-qty" id="sell-qty-divine" type="number" min="1" placeholder="1" aria-label="Divine potions to sell">
         <button class="btn-action" id="sell-divine">Sell</button>
       </div>
     </div>
@@ -322,6 +326,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-legendary">0</div>
         <button class="btn-action" id="btn-legendary">Arm</button>
+        <input class="sell-qty" id="sell-qty-legendary" type="number" min="1" placeholder="1" aria-label="Legendary potions to sell">
         <button class="btn-action" id="sell-legendary">Sell</button>
       </div>
     </div>
@@ -335,6 +340,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-mythic">0</div>
         <button class="btn-action" id="btn-mythic">Arm</button>
+        <input class="sell-qty" id="sell-qty-mythic" type="number" min="1" placeholder="1" aria-label="Mythic potions to sell">
         <button class="btn-action" id="sell-mythic">Sell</button>
       </div>
     </div>
@@ -348,6 +354,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-rare">0</div>
         <button class="btn-action" id="btn-rare">Arm</button>
+        <input class="sell-qty" id="sell-qty-rare" type="number" min="1" placeholder="1" aria-label="Rare potions to sell">
         <button class="btn-action" id="sell-rare">Sell</button>
       </div>
     </div>
@@ -361,6 +368,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-uncommon">0</div>
         <button class="btn-action" id="btn-uncommon">Arm</button>
+        <input class="sell-qty" id="sell-qty-uncommon" type="number" min="1" placeholder="1" aria-label="Uncommon potions to sell">
         <button class="btn-action" id="sell-uncommon">Sell</button>
       </div>
     </div>
@@ -374,6 +382,7 @@
       <div class="item-controls">
         <div class="item-qty" id="qty-basic">0</div>
         <button class="btn-action" id="btn-basic">Arm</button>
+        <input class="sell-qty" id="sell-qty-basic" type="number" min="1" placeholder="1" aria-label="Basic potions to sell">
         <button class="btn-action" id="sell-basic">Sell</button>
       </div>
     </div>

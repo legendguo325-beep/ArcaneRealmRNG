@@ -116,6 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  refreshWheelPrizes();
+  paintWheelMatrix();
+
   chrome.storage.local.get(['arcaneMasterStateV2'], (store) => {
     if (store.arcaneMasterStateV2) {
       const savedState = store.arcaneMasterStateV2;
@@ -152,15 +155,17 @@ document.addEventListener('DOMContentLoaded', () => {
     buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out today';
     buyEternalButton.disabled = runtimeState.eternalStock <= 0;
     potionTiers.forEach(tier => {
-      document.getElementById(`qty-${tier}`).textContent = runtimeState.inventory[tier] || 0;
+      const quantity = runtimeState.inventory[tier] || 0;
+      document.getElementById(`qty-${tier}`).textContent = `${quantity} owned`;
       const row = document.getElementById(`row-${tier}`);
       const button = document.getElementById(`btn-${tier}`);
       row.classList.toggle('active', runtimeState.activePotion === tier || (tier === 'eternal' && runtimeState.eternalBlessing));
-      button.textContent = tier === 'eternal' && runtimeState.eternalBlessing ? 'Blessed' : (runtimeState.activePotion === tier ? 'Active' : 'Arm');
+      button.textContent = tier === 'eternal' && runtimeState.eternalBlessing ? 'Blessed' : (runtimeState.activePotion === tier ? 'Active' : 'Use');
       button.disabled = tier === 'eternal' && runtimeState.eternalBlessing;
     });
     marketTiers.forEach(tier => {
       const button = document.querySelector(`[data-potion="${tier}"]`);
+      if (!button) return;
       const stock = runtimeState.marketStock[tier] || 0;
       button.textContent = stock > 0 ? `${button.dataset.cost} gems · ${stock} left` : 'Sold out today';
       button.disabled = stock <= 0;
@@ -515,18 +520,26 @@ document.addEventListener('DOMContentLoaded', () => {
     saveStateToLocalDisk();
   }
 
-  function sellPotion(tier) {
+  function sellPotion(tier, requestedAmount) {
     if (runtimeState.activePotion === tier) {
       tickerTray.textContent = 'Unequip that potion before selling it.';
       return;
     }
-    if (isMotionActive || runtimeState.inventory[tier] <= 0) {
+    const ownedAmount = runtimeState.inventory[tier] || 0;
+    const amount = requestedAmount === '' || requestedAmount === undefined ? 1 : Number(requestedAmount);
+    if (isMotionActive || ownedAmount <= 0) {
       tickerTray.textContent = `No ${tier} Potions available to sell.`;
       return;
     }
-    runtimeState.inventory[tier]--;
-    runtimeState.gems += sellValues[tier];
-    tickerTray.textContent = `${tier} Potion sold for ${sellValues[tier]} gems.`;
+    if (!Number.isInteger(amount) || amount < 1 || amount > ownedAmount) {
+      tickerTray.textContent = `Enter a whole number from 1 to ${ownedAmount}.`;
+      return;
+    }
+    const totalValue = sellValues[tier] * amount;
+    if (!window.confirm(`Sell ${amount} ${tier} Potion${amount === 1 ? '' : 's'} for ${totalValue} gems?`)) return;
+    runtimeState.inventory[tier] -= amount;
+    runtimeState.gems += totalValue;
+    tickerTray.textContent = `${amount} ${tier} Potion${amount === 1 ? '' : 's'} sold for ${totalValue} gems.`;
     refreshDisplayHUD();
     saveStateToLocalDisk();
   }
@@ -552,10 +565,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   ['basic', 'uncommon', 'rare', 'mythic', 'legendary', 'divine', 'secret'].forEach(tier => {
     document.getElementById(`btn-${tier}`).addEventListener('click', () => toggleInventoryBuff(tier));
-    document.getElementById(`sell-${tier}`).addEventListener('click', () => sellPotion(tier));
+    document.getElementById(`sell-${tier}`).addEventListener('click', () => sellPotion(tier, document.getElementById(`sell-qty-${tier}`).value));
   });
   document.getElementById('btn-eternal').addEventListener('click', useEternalPotion);
-  document.getElementById('sell-eternal').addEventListener('click', () => sellPotion('eternal'));
+  document.getElementById('sell-eternal').addEventListener('click', () => sellPotion('eternal', document.getElementById('sell-qty-eternal').value));
   document.querySelectorAll('[data-sell-item]').forEach(button => {
     button.addEventListener('click', () => sellLoot(button.dataset.sellItem, Number(button.dataset.sellValue)));
   });
