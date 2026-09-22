@@ -63,20 +63,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let runtimeState = structuredClone(defaultState);
 
   const basePrizes = [
-    { name: 'Small Coins', lootKey: 'smallCoins', weight: 50, type: 'coins', val: 4, materials: { timber: 1 }, c1: '#fff0a8', c2: '#e9b936' },
-    { name: 'Coin Reward', weight: 24, type: 'coins', val: 20, materials: { copperOre: 1, coal: 1 }, c1: '#ffe27a', c2: '#d68b18' },
-    { name: 'Bronze Ingot', weight: 7, type: 'material', materials: { bronzeIngot: 1 }, c1: '#e9b07b', c2: '#8a4d25' },
-    { name: 'Silver Ingot', weight: 5, type: 'material', materials: { silverIngot: 1 }, c1: '#e8f2ff', c2: '#7894ad' },
-    { name: 'Material Chest', lootKey: 'materialChest', weight: 5, type: 'materialChest', c1: '#d8c2a4', c2: '#8b5e34' },
-    { name: 'Gem Cluster', weight: 14, type: 'gems', val: 2, materials: { crystalShard: 1 }, c1: '#f1c7ff', c2: '#a342d4' },
-    { name: 'Divine Royalty', weight: 1, type: 'jackpot', val: 0, materials: { goldOre: 2 }, c1: '#fff8c7', c2: '#e19a00' },
-    { name: 'Basic Potion', weight: 8, type: 'potion', tier: 'basic', c1: '#e2e4e8', c2: '#777b89' },
-    { name: 'Uncommon Potion', weight: 7, type: 'potion', tier: 'uncommon', c1: '#d8ffd9', c2: '#2ecc71' },
-    { name: 'Rare Potion', weight: 4, type: 'potion', tier: 'rare', c1: '#d7f2ff', c2: '#0088ff' },
-    { name: 'Mythic Potion', weight: 2, type: 'potion', tier: 'mythic', c1: '#f0d9ff', c2: '#a832ff' },
-    { name: 'Legendary Potion', weight: 1, type: 'potion', tier: 'legendary', c1: '#fff3b0', c2: '#e19a00' },
-    { name: 'Divine Potion', weight: 0.5, type: 'potion', tier: 'divine', c1: '#dfffff', c2: '#00a9c7' },
-    { name: 'Eternal Potion', weight: 0.1, type: 'potion', tier: 'eternal', c1: '#eaffff', c2: '#00b9d4' }
+    { name: 'Small Coins', lootKey: 'smallCoins', rarity: 'common', weight: 50, type: 'coins', val: 4, materials: { timber: 1 }, c1: '#fff0a8', c2: '#e9b936' },
+    { name: 'Coin Reward', rarity: 'uncommon', weight: 24, type: 'coins', val: 20, materials: { copperOre: 1, coal: 1 }, c1: '#ffe27a', c2: '#d68b18' },
+    { name: 'Bronze Ingot', rarity: 'uncommon', weight: 7, type: 'material', materials: { bronzeIngot: 1 }, c1: '#e9b07b', c2: '#8a4d25' },
+    { name: 'Silver Ingot', rarity: 'rare', weight: 5, type: 'material', materials: { silverIngot: 1 }, c1: '#e8f2ff', c2: '#7894ad' },
+    { name: 'Material Chest', rarity: 'rare', lootKey: 'materialChest', weight: 5, type: 'materialChest', c1: '#d8c2a4', c2: '#8b5e34' },
+    { name: 'Gem Cluster', rarity: 'rare', weight: 14, type: 'gems', val: 2, materials: { crystalShard: 1 }, c1: '#f1c7ff', c2: '#a342d4' },
+    { name: 'Divine Royalty', rarity: 'divine', weight: 1, type: 'jackpot', val: 0, materials: { goldOre: 2 }, c1: '#fff8c7', c2: '#e19a00' },
+    { name: 'Basic Potion', rarity: 'common', weight: 8, type: 'potion', tier: 'basic', c1: '#e2e4e8', c2: '#777b89' },
+    { name: 'Uncommon Potion', rarity: 'uncommon', weight: 7, type: 'potion', tier: 'uncommon', c1: '#d8ffd9', c2: '#2ecc71' },
+    { name: 'Rare Potion', rarity: 'rare', weight: 4, type: 'potion', tier: 'rare', c1: '#d7f2ff', c2: '#0088ff' },
+    { name: 'Mythic Potion', rarity: 'mythic', weight: 2, type: 'potion', tier: 'mythic', c1: '#f0d9ff', c2: '#a832ff' },
+    { name: 'Legendary Potion', rarity: 'legendary', weight: 1, type: 'potion', tier: 'legendary', c1: '#fff3b0', c2: '#e19a00' },
+    { name: 'Divine Potion', rarity: 'divine', weight: 0.5, type: 'potion', tier: 'divine', c1: '#dfffff', c2: '#00a9c7' },
+    { name: 'Eternal Potion', rarity: 'eternal', weight: 0.1, type: 'potion', tier: 'eternal', c1: '#eaffff', c2: '#00b9d4' }
   ];
 
   let wheelPrizes = [];
@@ -250,16 +250,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const radius = canvas.width / 2;
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
     const wheelStyles = [
-      { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)' },
-      { inner: '#e8a85c', outer: '#8b451f', rim: '#a85f2a', center: '#ffd08a', shadow: 'rgba(139, 69, 31, 0.4)' },
-      { inner: '#e7f6ff', outer: '#7b9caf', rim: '#a9c7d8', center: '#f5fbff', shadow: 'rgba(91, 126, 148, 0.4)' },
-      { inner: '#fff0a8', outer: '#d18a00', rim: '#f0b928', center: '#fff8cf', shadow: 'rgba(197, 135, 0, 0.4)' }
+      { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', outline: '#4e2d1d', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)', texture: 'wood' },
+      { inner: '#e8a85c', outer: '#8b451f', rim: '#a85f2a', outline: '#542815', center: '#ffd08a', shadow: 'rgba(139, 69, 31, 0.4)', texture: 'bronze' },
+      { inner: '#e7f6ff', outer: '#7b9caf', rim: '#a9c7d8', outline: '#425d6d', center: '#f5fbff', shadow: 'rgba(91, 126, 148, 0.4)', texture: 'silver' },
+      { inner: '#fff0a8', outer: '#d18a00', rim: '#f0b928', outline: '#765000', center: '#fff8cf', shadow: 'rgba(197, 135, 0, 0.4)', texture: 'gold' }
     ];
     const specialStyles = {
-      silver: { inner: '#f7fdff', outer: '#7b9caf', rim: '#d9f2ff', center: '#ffffff', shadow: 'rgba(91, 126, 148, 0.55)' },
-      gold: { inner: '#fff8b0', outer: '#d18a00', rim: '#ffe36e', center: '#fffdf0', shadow: 'rgba(197, 135, 0, 0.6)' },
-      crystal: { inner: '#f4ffff', outer: '#43d7e7', rim: '#ffffff', center: '#ffffff', shadow: 'rgba(0, 185, 212, 0.7)' },
-      degraded: { inner: '#c8b9ac', outer: '#62554c', rim: '#8f7b6d', center: '#d8c9bc', shadow: 'rgba(81, 68, 58, 0.45)' }
+      silver: { inner: '#f7fdff', outer: '#7b9caf', rim: '#d9f2ff', outline: '#425d6d', center: '#ffffff', shadow: 'rgba(91, 126, 148, 0.55)', texture: 'silver' },
+      gold: { inner: '#fff8b0', outer: '#d18a00', rim: '#ffe36e', outline: '#765000', center: '#fffdf0', shadow: 'rgba(197, 135, 0, 0.6)', texture: 'gold' },
+      crystal: { inner: '#f4ffff', outer: '#43d7e7', rim: '#ffffff', outline: '#08798c', center: '#ffffff', shadow: 'rgba(0, 185, 212, 0.7)', texture: 'crystal' },
+      degraded: { inner: '#c8b9ac', outer: '#62554c', rim: '#8f7b6d', outline: '#3c3029', center: '#d8c9bc', shadow: 'rgba(81, 68, 58, 0.45)', texture: 'wood' }
+    };
+    const rarityStyles = {
+      common: { inner: '#d9dde2', outer: '#69727d', outline: '#3f474f' },
+      uncommon: { inner: '#d7f5df', outer: '#2e9d57', outline: '#176334' },
+      rare: { inner: '#d8edff', outer: '#2879c7', outline: '#124a82' },
+      mythic: { inner: '#eedcff', outer: '#8d38c7', outline: '#4c176d' },
+      legendary: { inner: '#fff0a6', outer: '#d28a00', outline: '#745000' },
+      divine: { inner: '#d9ffff', outer: '#00a9c7', outline: '#056675' },
+      eternal: { inner: '#f2ffff', outer: '#36cddd', outline: '#075d79' },
+      empty: { inner: '#b5aaa1', outer: '#5d5149', outline: '#332b26' }
     };
     const tierStyle = specialStyles[runtimeState.refreshWheelType] || wheelStyles[runtimeState.wheelTier] || wheelStyles[0];
     canvas.classList.toggle('rare-refresh', runtimeState.refreshWheelType !== 'normal');
@@ -272,33 +282,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (let i = 0; i < wheelPrizes.length; i++) {
       const item = wheelPrizes[i];
+      const rarityStyle = rarityStyles[item.rarity || item.type] || rarityStyles.common;
       const eternalColors = ['#dffcff', '#78dce8', '#f8ffff', '#75bfd8'];
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.arc(0, 0, radius - 2, i * sectorRadians, (i + 1) * sectorRadians);
       
       let radialGlowGradient = ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
-      radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : tierStyle.inner);
-      radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : tierStyle.outer);
+      radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : rarityStyle.inner);
+      radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : rarityStyle.outer);
       ctx.fillStyle = radialGlowGradient;
       ctx.fill();
 
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-      ctx.stroke();
-
       ctx.save();
-      ctx.fillStyle = runtimeState.eternalBlessing || runtimeState.refreshWheelType === 'crystal' ? '#075d79' : '#ffffff';
-      ctx.font = 'bold 7px Trebuchet MS, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.rotate(i * sectorRadians + sectorRadians / 2);
-      ctx.fillText(item.name, radius - 10, 0);
+      ctx.clip();
+      ctx.lineCap = 'round';
+      ctx.lineWidth = tierStyle.texture === 'wood' ? 2.5 : 1.5;
+      ctx.strokeStyle = runtimeState.eternalBlessing ? 'rgba(255, 255, 255, 0.34)' : 'rgba(45, 25, 14, 0.22)';
+      if (tierStyle.texture === 'wood') {
+        for (let grain = 1; grain <= 5; grain++) {
+          const grainRadius = 20 + grain * 13 + (i % 3) * 4;
+          ctx.beginPath();
+          ctx.arc(0, 0, grainRadius, i * sectorRadians - 0.18, (i + 1) * sectorRadians + 0.18);
+          ctx.stroke();
+        }
+      } else if (tierStyle.texture === 'crystal') {
+        for (let streak = -2; streak <= 3; streak++) {
+          ctx.beginPath();
+          ctx.moveTo(-radius, streak * 22 + (i % 2) * 8);
+          ctx.lineTo(radius, streak * 22 - 34);
+          ctx.stroke();
+        }
+      } else {
+        for (let ring = 1; ring <= 4; ring++) {
+          ctx.beginPath();
+          ctx.arc(0, 0, ring * 25, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius - 14, i * sectorRadians + 0.04, (i + 1) * sectorRadians - 0.04);
+        ctx.stroke();
+      }
       ctx.restore();
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = rarityStyle.outline;
+      ctx.stroke();
 
     }
     ctx.restore();
 
+    ctx.beginPath();
+    ctx.arc(radius, radius, radius - 3, 0, 2 * Math.PI);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = runtimeState.eternalBlessing ? '#08798c' : tierStyle.outline;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(radius, radius, radius - 9, 0, 2 * Math.PI);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = tierStyle.rim;
+    ctx.stroke();
     ctx.beginPath();
     ctx.arc(radius, radius, 8, 0, 2 * Math.PI);
     ctx.fillStyle = runtimeState.eternalBlessing ? '#eaffff' : tierStyle.center;

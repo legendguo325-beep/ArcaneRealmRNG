@@ -88,6 +88,24 @@
       border-top: 16px solid #c47a00;
       z-index: 10;
     }
+    .rarity-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px 8px;
+      margin: -6px auto 12px;
+      font-size: 8px;
+      color: #6e6258;
+    }
+    .rarity-key { display: inline-flex; align-items: center; gap: 3px; }
+    .rarity-swatch { width: 8px; height: 8px; border: 1px solid rgba(40, 30, 20, 0.35); border-radius: 2px; }
+    .rarity-common { background: #69727d; }
+    .rarity-uncommon { background: #2e9d57; }
+    .rarity-rare { background: #2879c7; }
+    .rarity-mythic { background: #8d38c7; }
+    .rarity-legendary { background: #d28a00; }
+    .rarity-divine { background: #00a9c7; }
+    .rarity-eternal { background: #36cddd; }
     button#spin-btn {
       width: 100%;
       padding: 12px;
@@ -220,6 +238,16 @@
   <div class="wheel-container">
     <div class="wheel-ticker"></div>
     <canvas id="wheel" width="200" height="200"></canvas>
+  </div>
+
+  <div class="rarity-legend" aria-label="Reward rarity colors">
+    <span class="rarity-key"><span class="rarity-swatch rarity-common"></span>Common</span>
+    <span class="rarity-key"><span class="rarity-swatch rarity-uncommon"></span>Uncommon</span>
+    <span class="rarity-key"><span class="rarity-swatch rarity-rare"></span>Rare</span>
+    <span class="rarity-key"><span class="rarity-swatch rarity-mythic"></span>Mythic</span>
+    <span class="rarity-key"><span class="rarity-swatch rarity-legendary"></span>Legendary</span>
+    <span class="rarity-key"><span class="rarity-swatch rarity-divine"></span>Divine</span>
+    <span class="rarity-key"><span class="rarity-swatch rarity-eternal"></span>Eternal</span>
   </div>
 
   <button id="spin-btn">Spin the Wheel</button>
