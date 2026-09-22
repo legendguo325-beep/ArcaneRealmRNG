@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let wheelPrizes = [];
   let currentWheelAngle = 0;
   let isMotionActive = false;
+  let wheelParticles = [];
 
   tabButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -185,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     payoutLevelLabel.textContent = runtimeState.payoutLevel;
     buyLuckButton.textContent = `Buy ${100 + runtimeState.luckLevel * 150} coins`;
     buyPayoutButton.textContent = `Buy ${150 + runtimeState.payoutLevel * 200} coins`;
-    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out today';
+    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '5,000 gems' : 'Sold out today';
     buyEternalButton.disabled = runtimeState.eternalStock <= 0;
     potionTiers.forEach(tier => {
       const quantity = runtimeState.inventory[tier] || 0;
@@ -248,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!wheelPrizes.length) refreshWheelPrizes();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const radius = canvas.width / 2;
-    const wheelRadius = radius - 16;
+    const wheelRadius = radius - 22;
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
     const wheelStyles = [
       { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', outline: '#4e2d1d', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)', texture: 'wood', rimDark: '#3a2116', rimMid: '#8d5832', rimLight: '#c68b53' },
@@ -357,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const spokeAngle = spoke * sectorRadians;
       ctx.beginPath();
       ctx.moveTo(Math.cos(spokeAngle) * 10, Math.sin(spokeAngle) * 10);
-      ctx.lineTo(Math.cos(spokeAngle) * (radius - 12), Math.sin(spokeAngle) * (radius - 12));
+      ctx.lineTo(Math.cos(spokeAngle) * (wheelRadius - 4), Math.sin(spokeAngle) * (wheelRadius - 4));
       ctx.stroke();
     }
     ctx.lineWidth = 2;
@@ -369,17 +370,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ctx.beginPath();
     ctx.arc(radius, radius, radius - 4, 0, 2 * Math.PI);
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 16;
     ctx.strokeStyle = runtimeState.eternalBlessing ? tierStyle.rimDark : tierStyle.rimDark;
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(radius, radius, radius - 11, 0, 2 * Math.PI);
-    ctx.lineWidth = 6;
+    ctx.arc(radius, radius, radius - 12, 0, 2 * Math.PI);
+    ctx.lineWidth = 7;
     ctx.strokeStyle = tierStyle.rimMid;
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(radius, radius, radius - 15, 0, 2 * Math.PI);
-    ctx.lineWidth = 3;
+    ctx.arc(radius, radius, radius - 18, 0, 2 * Math.PI);
+    ctx.lineWidth = 4;
     ctx.strokeStyle = tierStyle.rimLight;
     ctx.stroke();
     ctx.beginPath();
@@ -393,6 +394,62 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.arc(radius, radius, 4, 0, 2 * Math.PI);
     ctx.fillStyle = runtimeState.eternalBlessing ? '#08798c' : tierStyle.outline;
     ctx.fill();
+    drawWheelParticles();
+  }
+
+  function addWheelParticle(kind, count = 1) {
+    const radius = canvas.width / 2;
+    for (let particleIndex = 0; particleIndex < count; particleIndex++) {
+      const angle = Math.random() * Math.PI * 2;
+      const edge = radius - 5;
+      const speed = kind === 'gem' ? 0.8 + Math.random() * 1.5 : 0.35 + Math.random() * 0.55;
+      wheelParticles.push({
+        kind,
+        x: radius + Math.cos(angle) * edge,
+        y: radius + Math.sin(angle) * edge,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - (kind === 'gem' ? 0.25 : 0.05),
+        life: kind === 'gem' ? 42 + Math.random() * 20 : 48 + Math.random() * 18,
+        size: kind === 'gem' ? 2 + Math.random() * 2 : 3 + Math.random() * 2
+      });
+    }
+  }
+
+  function drawWheelParticles() {
+    wheelParticles.forEach(particle => {
+      const alpha = Math.max(0, Math.min(1, particle.life / 45));
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(particle.x, particle.y);
+      ctx.shadowBlur = particle.kind === 'gem' ? 9 : 5;
+      ctx.shadowColor = particle.kind === 'gem' ? '#66e8ff' : '#94c95a';
+      ctx.fillStyle = particle.kind === 'gem' ? '#b9faff' : '#8bbd4e';
+      if (particle.kind === 'clover') {
+        for (let leaf = 0; leaf < 4; leaf++) {
+          const leafAngle = leaf * Math.PI / 2;
+          ctx.beginPath();
+          ctx.arc(Math.cos(leafAngle) * particle.size * 0.7, Math.sin(leafAngle) * particle.size * 0.7, particle.size * 0.65, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.rotate(particle.life * 0.12);
+        ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
+      }
+      ctx.restore();
+    });
+  }
+
+  function animateWheelParticles() {
+    wheelParticles = wheelParticles.filter(particle => particle.life > 0);
+    wheelParticles.forEach(particle => {
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.vy += 0.008;
+      particle.life--;
+    });
+    if (wheelParticles.length) paintWheelMatrix();
   }
 
   function processStateProbabilityIndex() {
@@ -524,6 +581,10 @@ document.addEventListener('DOMContentLoaded', () => {
         : `${landedSlice.name} won!`;
     } else if (landedSlice.type === 'empty') {
       tickerTray.textContent = 'The wheel lands on an empty slot.';
+    }
+
+    if (['rare', 'mythic', 'legendary', 'divine', 'eternal'].includes(landedSlice.rarity)) {
+      addWheelParticle('gem', landedSlice.rarity === 'eternal' ? 24 : 14);
     }
 
     if (runtimeState.activePotion) {
@@ -678,11 +739,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function buyEternalPotion() {
     restockMarketIfNeeded();
     if (isMotionActive || runtimeState.eternalStock <= 0) return;
-    if (runtimeState.gems < 1000) {
-      tickerTray.textContent = `You need ${1000 - runtimeState.gems} more gems.`;
+    if (runtimeState.gems < 5000) {
+      tickerTray.textContent = `You need ${5000 - runtimeState.gems} more gems.`;
       return;
     }
-    runtimeState.gems -= 1000;
+    runtimeState.gems -= 5000;
     runtimeState.inventory.eternal++;
     runtimeState.eternalStock--;
     tickerTray.textContent = 'Eternal Potion secured. Use it for a permanent crystal blessing.';
@@ -753,6 +814,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   setInterval(updateCooldownDisplay, 250);
+  setInterval(() => addWheelParticle('clover'), 1200);
+  setInterval(animateWheelParticles, 80);
 });
 
 
