@@ -248,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!wheelPrizes.length) refreshWheelPrizes();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const radius = canvas.width / 2;
+    const wheelRadius = radius - 16;
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
     const wheelStyles = [
       { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', outline: '#4e2d1d', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)', texture: 'wood' },
@@ -286,9 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const eternalColors = ['#dffcff', '#78dce8', '#f8ffff', '#75bfd8'];
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.arc(0, 0, radius - 2, i * sectorRadians, (i + 1) * sectorRadians);
+      ctx.arc(0, 0, wheelRadius, i * sectorRadians, (i + 1) * sectorRadians);
       
-      let radialGlowGradient = ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
+      let radialGlowGradient = ctx.createRadialGradient(0, 0, 6, 0, 0, wheelRadius);
       radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : rarityStyle.inner);
       radialGlowGradient.addColorStop(0.52, runtimeState.eternalBlessing ? '#78dce8' : rarityStyle.mid);
       radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : rarityStyle.outer);
@@ -320,8 +321,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (tierStyle.texture === 'crystal') {
         for (let streak = -2; streak <= 3; streak++) {
           ctx.beginPath();
-          ctx.moveTo(-radius, streak * 22 + (i % 2) * 8);
-          ctx.lineTo(radius, streak * 22 - 34);
+          ctx.moveTo(-wheelRadius, streak * 22 + (i % 2) * 8);
+          ctx.lineTo(wheelRadius, streak * 22 - 34);
           ctx.stroke();
         }
       } else {
@@ -362,19 +363,24 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.lineWidth = 2;
     ctx.strokeStyle = tierStyle.rim;
     ctx.beginPath();
-    ctx.arc(0, 0, radius - 16, 0, 2 * Math.PI);
+    ctx.arc(0, 0, wheelRadius - 4, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.restore();
 
     ctx.beginPath();
-    ctx.arc(radius, radius, radius - 3, 0, 2 * Math.PI);
-    ctx.lineWidth = 5;
+    ctx.arc(radius, radius, radius - 4, 0, 2 * Math.PI);
+    ctx.lineWidth = 10;
     ctx.strokeStyle = runtimeState.eternalBlessing ? '#08798c' : tierStyle.outline;
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(radius, radius, radius - 9, 0, 2 * Math.PI);
-    ctx.lineWidth = 2;
+    ctx.arc(radius, radius, radius - 11, 0, 2 * Math.PI);
+    ctx.lineWidth = 4;
     ctx.strokeStyle = tierStyle.rim;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(radius, radius, radius - 15, 0, 2 * Math.PI);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.62)';
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(radius, radius, 8, 0, 2 * Math.PI);
