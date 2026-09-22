@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     payoutLevelLabel.textContent = runtimeState.payoutLevel;
     buyLuckButton.textContent = `Buy ${100 + runtimeState.luckLevel * 150} coins`;
     buyPayoutButton.textContent = `Buy ${150 + runtimeState.payoutLevel * 200} coins`;
-    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out today';
+    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '5,000 gems' : 'Sold out today';
     buyEternalButton.disabled = runtimeState.eternalStock <= 0;
     potionTiers.forEach(tier => {
       const quantity = runtimeState.inventory[tier] || 0;
