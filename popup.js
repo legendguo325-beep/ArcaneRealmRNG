@@ -334,6 +334,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     ctx.restore();
 
+    const spokeStyle = runtimeState.eternalBlessing ? '#56e3ee' : tierStyle.outline;
+    ctx.save();
+    ctx.translate(radius, radius);
+    ctx.rotate(currentWheelAngle);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = spokeStyle;
+    for (let spoke = 0; spoke < wheelPrizes.length; spoke++) {
+      const spokeAngle = spoke * sectorRadians;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(spokeAngle) * 10, Math.sin(spokeAngle) * 10);
+      ctx.lineTo(Math.cos(spokeAngle) * (radius - 12), Math.sin(spokeAngle) * (radius - 12));
+      ctx.stroke();
+    }
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = tierStyle.rim;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius - 16, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+
     ctx.beginPath();
     ctx.arc(radius, radius, radius - 3, 0, 2 * Math.PI);
     ctx.lineWidth = 5;
@@ -351,6 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.lineWidth = 2;
     ctx.strokeStyle = runtimeState.eternalBlessing ? '#00b9d4' : tierStyle.rim;
     ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(radius, radius, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = runtimeState.eternalBlessing ? '#08798c' : tierStyle.outline;
+    ctx.fill();
   }
 
   function processStateProbabilityIndex() {
@@ -513,7 +538,21 @@ document.addEventListener('DOMContentLoaded', () => {
       updateCooldownDisplay();
     }
     refreshDisplayHUD();
+    showRewardPopup(landedSlice, tickerTray.textContent);
     saveStateToLocalDisk();
+  }
+
+  function showRewardPopup(landedSlice, detail) {
+    const popup = document.getElementById('reward-popup');
+    const icon = document.getElementById('reward-icon');
+    const title = document.getElementById('reward-title');
+    const detailLabel = document.getElementById('reward-detail');
+    const icons = { coins: '◉', gems: '◆', material: '▰', materialChest: '▣', jackpot: '✦', potion: '⚗', empty: '—' };
+    icon.textContent = icons[landedSlice.type] || '✦';
+    icon.className = `reward-icon rarity-${landedSlice.rarity || 'common'}`;
+    title.textContent = landedSlice.type === 'empty' ? 'Empty Slot' : landedSlice.name;
+    detailLabel.textContent = detail;
+    popup.classList.remove('hidden');
   }
 
   function addMaterials(materials) {
@@ -683,6 +722,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-eternal').addEventListener('click', useEternalPotion);
   document.getElementById('sell-eternal').addEventListener('click', () => sellPotion('eternal', document.getElementById('sell-qty-eternal').value));
+  document.getElementById('reward-close').addEventListener('click', () => {
+    document.getElementById('reward-popup').classList.add('hidden');
+  });
   document.querySelectorAll('[data-sell-item]').forEach(button => {
     button.addEventListener('click', () => sellLoot(button.dataset.sellItem, Number(button.dataset.sellValue)));
   });
