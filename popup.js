@@ -262,14 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
       degraded: { inner: '#c8b9ac', outer: '#62554c', rim: '#8f7b6d', outline: '#3c3029', center: '#d8c9bc', shadow: 'rgba(81, 68, 58, 0.45)', texture: 'wood' }
     };
     const rarityStyles = {
-      common: { inner: '#d9dde2', outer: '#69727d', outline: '#3f474f' },
-      uncommon: { inner: '#d7f5df', outer: '#2e9d57', outline: '#176334' },
-      rare: { inner: '#d8edff', outer: '#2879c7', outline: '#124a82' },
-      mythic: { inner: '#eedcff', outer: '#8d38c7', outline: '#4c176d' },
-      legendary: { inner: '#fff0a6', outer: '#d28a00', outline: '#745000' },
-      divine: { inner: '#d9ffff', outer: '#00a9c7', outline: '#056675' },
-      eternal: { inner: '#f2ffff', outer: '#36cddd', outline: '#075d79' },
-      empty: { inner: '#b5aaa1', outer: '#5d5149', outline: '#332b26' }
+      common: { inner: '#fff3d1', mid: '#c39a62', outer: '#694626', outline: '#392516' },
+      uncommon: { inner: '#efffc9', mid: '#8bc957', outer: '#2d7137', outline: '#174524' },
+      rare: { inner: '#e7f5ff', mid: '#62a9ed', outer: '#1f4f9e', outline: '#102b63' },
+      mythic: { inner: '#f8e7ff', mid: '#c06be8', outer: '#6b238f', outline: '#37104c' },
+      legendary: { inner: '#fff8c7', mid: '#f0b52f', outer: '#a7520d', outline: '#572706' },
+      divine: { inner: '#e0ffff', mid: '#42d1cc', outer: '#087487', outline: '#043e4b' },
+      eternal: { inner: '#ffffff', mid: '#88f1f4', outer: '#159bb8', outline: '#034c68' },
+      empty: { inner: '#e1d5ca', mid: '#9b8879', outer: '#55463d', outline: '#30251f' }
     };
     const tierStyle = specialStyles[runtimeState.refreshWheelType] || wheelStyles[runtimeState.wheelTier] || wheelStyles[0];
     canvas.classList.toggle('rare-refresh', runtimeState.refreshWheelType !== 'normal');
@@ -290,15 +290,26 @@ document.addEventListener('DOMContentLoaded', () => {
       
       let radialGlowGradient = ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
       radialGlowGradient.addColorStop(0, runtimeState.eternalBlessing ? eternalColors[(i + 1) % eternalColors.length] : rarityStyle.inner);
+      radialGlowGradient.addColorStop(0.52, runtimeState.eternalBlessing ? '#78dce8' : rarityStyle.mid);
       radialGlowGradient.addColorStop(1, runtimeState.eternalBlessing ? eternalColors[i % eternalColors.length] : rarityStyle.outer);
       ctx.fillStyle = radialGlowGradient;
       ctx.fill();
 
       ctx.save();
       ctx.clip();
+      const faceShade = ctx.createLinearGradient(-radius, -radius, radius, radius);
+      faceShade.addColorStop(0, 'rgba(255, 255, 255, 0.24)');
+      faceShade.addColorStop(0.45, 'rgba(255, 255, 255, 0.02)');
+      faceShade.addColorStop(1, 'rgba(20, 12, 8, 0.28)');
+      ctx.fillStyle = faceShade;
+      ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
+      ctx.restore();
+
+      ctx.save();
+      ctx.clip();
       ctx.lineCap = 'round';
       ctx.lineWidth = tierStyle.texture === 'wood' ? 2.5 : 1.5;
-      ctx.strokeStyle = runtimeState.eternalBlessing ? 'rgba(255, 255, 255, 0.34)' : 'rgba(45, 25, 14, 0.22)';
+      ctx.strokeStyle = runtimeState.eternalBlessing ? 'rgba(255, 255, 255, 0.24)' : 'rgba(45, 25, 14, 0.13)';
       if (tierStyle.texture === 'wood') {
         for (let grain = 1; grain <= 5; grain++) {
           const grainRadius = 20 + grain * 13 + (i % 3) * 4;
