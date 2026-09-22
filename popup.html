@@ -61,6 +61,7 @@
       width: 200px;
       height: 200px;
       margin: 0 auto 14px auto;
+      overflow: visible;
     }
     canvas#wheel {
       display: block;
@@ -73,6 +74,14 @@
     }
     canvas#wheel.rare-refresh {
       animation: wheel-flash 900ms ease-out;
+    }
+    canvas#wheel-effects {
+      position: absolute;
+      inset: -20px;
+      width: 240px;
+      height: 240px;
+      pointer-events: none;
+      z-index: 4;
     }
     @keyframes wheel-flash {
       0% { filter: brightness(1); }
@@ -283,6 +292,7 @@
   <div class="wheel-container">
     <div class="wheel-ticker"></div>
     <canvas id="wheel" width="200" height="200"></canvas>
+    <canvas id="wheel-effects" width="240" height="240" aria-hidden="true"></canvas>
   </div>
 
   <div class="rarity-legend" aria-label="Reward rarity colors">

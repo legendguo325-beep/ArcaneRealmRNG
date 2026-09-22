@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
+  const effectsCanvas = document.getElementById('wheel-effects');
+  const effectsCtx = effectsCanvas?.getContext('2d');
   const spinBtn = document.getElementById('spin-btn');
   const tickerTray = document.getElementById('ticker-tray');
   const coinLabel = document.getElementById('coins-val');
@@ -82,7 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let wheelPrizes = [];
   let currentWheelAngle = 0;
   let isMotionActive = false;
-  let wheelParticles = [];
+  const clovers = [];
+  const sparks = [];
+  let lastCloverSpawn = 0;
+  let effectsFrame = null;
 
   tabButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -152,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   refreshWheelPrizes();
   paintWheelMatrix();
+  renderWheelEffects();
 
   chrome.storage.local.get(['arcaneMasterStateV2'], (store) => {
     if (store.arcaneMasterStateV2) {
@@ -186,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     payoutLevelLabel.textContent = runtimeState.payoutLevel;
     buyLuckButton.textContent = `Buy ${100 + runtimeState.luckLevel * 150} coins`;
     buyPayoutButton.textContent = `Buy ${150 + runtimeState.payoutLevel * 200} coins`;
-    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '5,000 gems' : 'Sold out today';
+    buyEternalButton.textContent = runtimeState.eternalStock > 0 ? '1,000 gems' : 'Sold out today';
     buyEternalButton.disabled = runtimeState.eternalStock <= 0;
     potionTiers.forEach(tier => {
       const quantity = runtimeState.inventory[tier] || 0;
@@ -249,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!wheelPrizes.length) refreshWheelPrizes();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const radius = canvas.width / 2;
-    const wheelRadius = radius - 22;
+    const wheelRadius = radius - 20;
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
     const wheelStyles = [
       { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', outline: '#4e2d1d', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)', texture: 'wood', rimDark: '#3a2116', rimMid: '#8d5832', rimLight: '#c68b53' },
@@ -358,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const spokeAngle = spoke * sectorRadians;
       ctx.beginPath();
       ctx.moveTo(Math.cos(spokeAngle) * 10, Math.sin(spokeAngle) * 10);
-      ctx.lineTo(Math.cos(spokeAngle) * (wheelRadius - 4), Math.sin(spokeAngle) * (wheelRadius - 4));
+      ctx.lineTo(Math.cos(spokeAngle) * (radius - 12), Math.sin(spokeAngle) * (radius - 12));
       ctx.stroke();
     }
     ctx.lineWidth = 2;
@@ -374,12 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.strokeStyle = runtimeState.eternalBlessing ? tierStyle.rimDark : tierStyle.rimDark;
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(radius, radius, radius - 12, 0, 2 * Math.PI);
-    ctx.lineWidth = 7;
+    ctx.arc(radius, radius, radius - 11, 0, 2 * Math.PI);
+    ctx.lineWidth = 8;
     ctx.strokeStyle = tierStyle.rimMid;
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(radius, radius, radius - 18, 0, 2 * Math.PI);
+    ctx.arc(radius, radius, radius - 15, 0, 2 * Math.PI);
     ctx.lineWidth = 4;
     ctx.strokeStyle = tierStyle.rimLight;
     ctx.stroke();
@@ -394,62 +400,90 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.arc(radius, radius, 4, 0, 2 * Math.PI);
     ctx.fillStyle = runtimeState.eternalBlessing ? '#08798c' : tierStyle.outline;
     ctx.fill();
-    drawWheelParticles();
   }
 
-  function addWheelParticle(kind, count = 1) {
-    const radius = canvas.width / 2;
-    for (let particleIndex = 0; particleIndex < count; particleIndex++) {
-      const angle = Math.random() * Math.PI * 2;
-      const edge = radius - 5;
-      const speed = kind === 'gem' ? 0.8 + Math.random() * 1.5 : 0.35 + Math.random() * 0.55;
-      wheelParticles.push({
-        kind,
-        x: radius + Math.cos(angle) * edge,
-        y: radius + Math.sin(angle) * edge,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (kind === 'gem' ? 0.25 : 0.05),
-        life: kind === 'gem' ? 42 + Math.random() * 20 : 48 + Math.random() * 18,
-        size: kind === 'gem' ? 2 + Math.random() * 2 : 3 + Math.random() * 2
-      });
+  function spawnClover() {
+    clovers.push({ angle: Math.random() * Math.PI * 2, distance: 103, size: 12 + Math.random() * 5, age: 0, life: 2600, drift: (Math.random() - 0.5) * 0.18 });
+  }
+
+  function spawnRareSparks() {
+    for (let index = 0; index < 18; index++) {
+      sparks.push({ angle: Math.random() * Math.PI * 2, distance: 88, speed: 0.8 + Math.random() * 1.2, size: 2 + Math.random() * 3, age: 0, life: 900 });
     }
   }
 
-  function drawWheelParticles() {
-    wheelParticles.forEach(particle => {
-      const alpha = Math.max(0, Math.min(1, particle.life / 45));
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(particle.x, particle.y);
-      ctx.shadowBlur = particle.kind === 'gem' ? 9 : 5;
-      ctx.shadowColor = particle.kind === 'gem' ? '#66e8ff' : '#94c95a';
-      ctx.fillStyle = particle.kind === 'gem' ? '#b9faff' : '#8bbd4e';
-      if (particle.kind === 'clover') {
-        for (let leaf = 0; leaf < 4; leaf++) {
-          const leafAngle = leaf * Math.PI / 2;
-          ctx.beginPath();
-          ctx.arc(Math.cos(leafAngle) * particle.size * 0.7, Math.sin(leafAngle) * particle.size * 0.7, particle.size * 0.65, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else {
-        ctx.rotate(particle.life * 0.12);
-        ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
-      }
-      ctx.restore();
-    });
+  function drawClover(effect, centerX, centerY) {
+    const x = centerX + Math.cos(effect.angle) * effect.distance;
+    const y = centerY + Math.sin(effect.angle) * effect.distance;
+    const petalOffset = effect.size * 0.32;
+    effectsCtx.save();
+    effectsCtx.translate(x, y);
+    effectsCtx.rotate(effect.angle + Math.PI / 2);
+    effectsCtx.strokeStyle = '#214b24';
+    effectsCtx.fillStyle = '#54a83f';
+    effectsCtx.lineWidth = 2.2;
+    effectsCtx.beginPath();
+    effectsCtx.moveTo(0, effect.size * 0.45);
+    effectsCtx.lineTo(0, effect.size * 1.05);
+    effectsCtx.stroke();
+    effectsCtx.beginPath();
+    effectsCtx.moveTo(0, 0);
+    effectsCtx.arc(-petalOffset, -petalOffset, effect.size * 0.42, 0, Math.PI * 2);
+    effectsCtx.moveTo(0, 0);
+    effectsCtx.arc(petalOffset, -petalOffset, effect.size * 0.42, 0, Math.PI * 2);
+    effectsCtx.moveTo(0, 0);
+    effectsCtx.arc(-petalOffset, petalOffset, effect.size * 0.42, 0, Math.PI * 2);
+    effectsCtx.moveTo(0, 0);
+    effectsCtx.arc(petalOffset, petalOffset, effect.size * 0.42, 0, Math.PI * 2);
+    effectsCtx.fill();
+    effectsCtx.stroke();
+    effectsCtx.strokeStyle = '#d8f28a';
+    effectsCtx.lineWidth = 1;
+    effectsCtx.beginPath();
+    effectsCtx.moveTo(0, 0); effectsCtx.lineTo(-petalOffset, -petalOffset);
+    effectsCtx.moveTo(0, 0); effectsCtx.lineTo(petalOffset, -petalOffset);
+    effectsCtx.moveTo(0, 0); effectsCtx.lineTo(-petalOffset, petalOffset);
+    effectsCtx.moveTo(0, 0); effectsCtx.lineTo(petalOffset, petalOffset);
+    effectsCtx.stroke();
+    effectsCtx.restore();
   }
 
-  function animateWheelParticles() {
-    wheelParticles = wheelParticles.filter(particle => particle.life > 0);
-    wheelParticles.forEach(particle => {
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-      particle.vy += 0.008;
-      particle.life--;
+  function renderWheelEffects(now = performance.now()) {
+    if (!effectsCtx || !effectsCanvas) return;
+    const center = effectsCanvas.width / 2;
+    effectsCtx.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+    if (!isMotionActive && now - lastCloverSpawn >= 1200) {
+      spawnClover();
+      lastCloverSpawn = now;
+    }
+    clovers.forEach(clover => {
+      clover.age += 16;
+      clover.distance += clover.drift;
+      effectsCtx.globalAlpha = Math.max(0, 1 - clover.age / clover.life);
+      drawClover(clover, center, center);
     });
-    if (wheelParticles.length) paintWheelMatrix();
+    sparks.forEach(spark => {
+      spark.age += 16;
+      spark.distance += spark.speed;
+      const x = center + Math.cos(spark.angle) * spark.distance;
+      const y = center + Math.sin(spark.angle) * spark.distance;
+      effectsCtx.globalAlpha = Math.max(0, 1 - spark.age / spark.life);
+      effectsCtx.fillStyle = '#ffd86a';
+      effectsCtx.strokeStyle = '#fff5bd';
+      effectsCtx.lineWidth = 1.5;
+      effectsCtx.beginPath();
+      effectsCtx.moveTo(x, y - spark.size * 2);
+      effectsCtx.lineTo(x + spark.size, y);
+      effectsCtx.lineTo(x, y + spark.size * 2);
+      effectsCtx.lineTo(x - spark.size, y);
+      effectsCtx.closePath();
+      effectsCtx.fill();
+      effectsCtx.stroke();
+    });
+    effectsCtx.globalAlpha = 1;
+    for (let index = clovers.length - 1; index >= 0; index--) if (clovers[index].age >= clovers[index].life) clovers.splice(index, 1);
+    for (let index = sparks.length - 1; index >= 0; index--) if (sparks[index].age >= sparks[index].life) sparks.splice(index, 1);
+    effectsFrame = requestAnimationFrame(() => renderWheelEffects(performance.now()));
   }
 
   function processStateProbabilityIndex() {
@@ -584,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (['rare', 'mythic', 'legendary', 'divine', 'eternal'].includes(landedSlice.rarity)) {
-      addWheelParticle('gem', landedSlice.rarity === 'eternal' ? 24 : 14);
+      spawnRareSparks();
     }
 
     if (runtimeState.activePotion) {
@@ -814,8 +848,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   setInterval(updateCooldownDisplay, 250);
-  setInterval(() => addWheelParticle('clover'), 1200);
-  setInterval(animateWheelParticles, 80);
 });
 
 
