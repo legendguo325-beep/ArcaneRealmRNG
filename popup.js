@@ -251,16 +251,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const wheelRadius = radius - 16;
     const sectorRadians = (2 * Math.PI) / wheelPrizes.length;
     const wheelStyles = [
-      { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', outline: '#4e2d1d', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)', texture: 'wood' },
-      { inner: '#e8a85c', outer: '#8b451f', rim: '#a85f2a', outline: '#542815', center: '#ffd08a', shadow: 'rgba(139, 69, 31, 0.4)', texture: 'bronze' },
-      { inner: '#e7f6ff', outer: '#7b9caf', rim: '#a9c7d8', outline: '#425d6d', center: '#f5fbff', shadow: 'rgba(91, 126, 148, 0.4)', texture: 'silver' },
-      { inner: '#fff0a8', outer: '#d18a00', rim: '#f0b928', outline: '#765000', center: '#fff8cf', shadow: 'rgba(197, 135, 0, 0.4)', texture: 'gold' }
+      { inner: '#d2a66f', outer: '#81502d', rim: '#9b6238', outline: '#4e2d1d', center: '#f0c58a', shadow: 'rgba(107, 61, 28, 0.38)', texture: 'wood', rimDark: '#3a2116', rimMid: '#8d5832', rimLight: '#c68b53' },
+      { inner: '#e8a85c', outer: '#8b451f', rim: '#a85f2a', outline: '#542815', center: '#ffd08a', shadow: 'rgba(139, 69, 31, 0.4)', texture: 'bronze', rimDark: '#3f2115', rimMid: '#99502a', rimLight: '#e7a15c' },
+      { inner: '#e7f6ff', outer: '#7b9caf', rim: '#a9c7d8', outline: '#425d6d', center: '#f5fbff', shadow: 'rgba(91, 126, 148, 0.4)', texture: 'silver', rimDark: '#314957', rimMid: '#789aad', rimLight: '#d9f2ff' },
+      { inner: '#fff0a8', outer: '#d18a00', rim: '#f0b928', outline: '#765000', center: '#fff8cf', shadow: 'rgba(197, 135, 0, 0.4)', texture: 'gold', rimDark: '#5a3900', rimMid: '#b86d08', rimLight: '#ffe36e' }
     ];
     const specialStyles = {
-      silver: { inner: '#f7fdff', outer: '#7b9caf', rim: '#d9f2ff', outline: '#425d6d', center: '#ffffff', shadow: 'rgba(91, 126, 148, 0.55)', texture: 'silver' },
-      gold: { inner: '#fff8b0', outer: '#d18a00', rim: '#ffe36e', outline: '#765000', center: '#fffdf0', shadow: 'rgba(197, 135, 0, 0.6)', texture: 'gold' },
-      crystal: { inner: '#f4ffff', outer: '#43d7e7', rim: '#ffffff', outline: '#08798c', center: '#ffffff', shadow: 'rgba(0, 185, 212, 0.7)', texture: 'crystal' },
-      degraded: { inner: '#c8b9ac', outer: '#62554c', rim: '#8f7b6d', outline: '#3c3029', center: '#d8c9bc', shadow: 'rgba(81, 68, 58, 0.45)', texture: 'wood' }
+      silver: { inner: '#f7fdff', outer: '#7b9caf', rim: '#d9f2ff', outline: '#425d6d', center: '#ffffff', shadow: 'rgba(91, 126, 148, 0.55)', texture: 'silver', rimDark: '#314957', rimMid: '#789aad', rimLight: '#d9f2ff' },
+      gold: { inner: '#fff8b0', outer: '#d18a00', rim: '#ffe36e', outline: '#765000', center: '#fffdf0', shadow: 'rgba(197, 135, 0, 0.6)', texture: 'gold', rimDark: '#5a3900', rimMid: '#b86d08', rimLight: '#ffe36e' },
+      crystal: { inner: '#f4ffff', outer: '#43d7e7', rim: '#ffffff', outline: '#08798c', center: '#ffffff', shadow: 'rgba(0, 185, 212, 0.7)', texture: 'crystal', rimDark: '#075d79', rimMid: '#159bb8', rimLight: '#8ffcff' },
+      degraded: { inner: '#c8b9ac', outer: '#62554c', rim: '#8f7b6d', outline: '#3c3029', center: '#d8c9bc', shadow: 'rgba(81, 68, 58, 0.45)', texture: 'wood', rimDark: '#30251f', rimMid: '#706158', rimLight: '#b9a18d' }
     };
     const rarityStyles = {
       common: { inner: '#fff3d1', mid: '#c39a62', outer: '#694626', outline: '#392516' },
@@ -299,8 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.save();
       ctx.clip();
       const faceShade = ctx.createLinearGradient(-radius, -radius, radius, radius);
-      faceShade.addColorStop(0, 'rgba(255, 255, 255, 0.24)');
-      faceShade.addColorStop(0.45, 'rgba(255, 255, 255, 0.02)');
+      faceShade.addColorStop(0, 'rgba(255, 255, 255, 0.09)');
+      faceShade.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
       faceShade.addColorStop(1, 'rgba(20, 12, 8, 0.28)');
       ctx.fillStyle = faceShade;
       ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
@@ -369,18 +369,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ctx.beginPath();
     ctx.arc(radius, radius, radius - 4, 0, 2 * Math.PI);
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = runtimeState.eternalBlessing ? '#08798c' : tierStyle.outline;
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = runtimeState.eternalBlessing ? tierStyle.rimDark : tierStyle.rimDark;
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(radius, radius, radius - 11, 0, 2 * Math.PI);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = tierStyle.rim;
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = tierStyle.rimMid;
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(radius, radius, radius - 15, 0, 2 * Math.PI);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.62)';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = tierStyle.rimLight;
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(radius, radius, 8, 0, 2 * Math.PI);
